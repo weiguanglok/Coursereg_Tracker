@@ -20,6 +20,38 @@ def clean_str(val):
         return ""
     return re.sub(r'\s+', ' ', str(val)).strip()
 
+FACULTY_MAP = {
+    "Multi Disciplinary": "Multi Disciplinary Programme",
+    "NUS Business": "NUS Business School",
+    "SSH School of": "SSH School of Public Health",
+    "School of": "School of Computing"
+}
+
+DEPT_MAP = {
+    "Analytics and": "Analytics and Operations",
+    "Centre for Future-ready": "Centre for Future-ready Grads",
+    "Chua Thian Poh Comm": "Chua Thian Poh Comm Leader Ctr",
+    "College of Alice & Peter": "College of Alice & Peter Tan",
+    "Computing & Eng": "Computing & Eng Programme",
+    "Ctr for Engl Lang": "Ctr for Engl Lang Comms",
+    "Food Science &": "Food Science & Technology",
+    "Management &": "Management & Organisation",
+    "NUS College Dean's": "NUS College Dean's Office",
+    "Pharmacy&Pharmaceut": "Pharmacy & Pharmaceutical Sciences",
+    "Pharmacy&Pharmaceut icalScience": "Pharmacy & Pharmaceutical Sciences",
+    "Ridge View Residential": "Ridge View Residential College",
+    "SSH School of Public": "SSH School of Public Health DO",
+    "Statistics and Data": "Statistics and Data Science"
+}
+
+def clean_faculty(fac):
+    cleaned = clean_str(fac)
+    return FACULTY_MAP.get(cleaned, cleaned)
+
+def clean_dept(dept):
+    cleaned = clean_str(dept)
+    return DEPT_MAP.get(cleaned, cleaned)
+
 def extract_meta_from_pdf(first_page_text, filename):
     round_match = re.search(r'Round\s*(\d+)', first_page_text, re.IGNORECASE)
     sem_match = re.search(r'Semester\s*(\d+)', first_page_text, re.IGNORECASE)
@@ -71,8 +103,8 @@ def process_pdf(pdf_path):
                     if not code_cell or code_cell.lower() == 'course' or 'code' in code_cell.lower():
                         continue
                     
-                    faculty = clean_str(row[0])
-                    dept = clean_str(row[1])
+                    faculty = clean_faculty(row[0])
+                    dept = clean_dept(row[1])
                     course_code = code_cell.upper()
                     course_title = clean_str(row[3])
                     course_class = clean_str(row[4])
