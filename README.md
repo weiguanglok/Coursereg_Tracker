@@ -13,7 +13,7 @@ An interactive, responsive web application for NUS students to search course dem
 ## 🌟 Key Features
 
 - 🔍 **Instant Search & Autocomplete**: Search by module/course code (e.g., `CS2040C`, `AR2228`, `GEA1000`) or title.
-- 📈 **Oversubscription Intelligence**: Instantly identify modules where `Demand > Vacancy`, with calculated competition ratios (e.g. `2.45x Oversubscribed`) and quota deficit metrics.
+- 📈 **Oversubscription Analysis**: Instantly identify modules where `Demand > Vacancy`, with calculated competition ratios (e.g. `2.45x Oversubscribed`) and quota deficit metrics.
 - 📅 **Year-over-Year Historical Comparison**:
   - Compare current round statistics with the **exact same round from the previous academic year** (e.g. AY26/27 Sem 1 Round 1 vs AY25/26 Sem 1 Round 1).
   - Visual side-by-side comparative charts powered by Chart.js.
@@ -55,7 +55,7 @@ You can publish this project to GitHub Pages in under 2 minutes:
 2. Create a new public repository on GitHub (e.g. `nus-coursereg-tracker`).
 3. Link and push your repository:
    ```bash
-   git remote add origin https://github.com/<YOUR_USERNAME>/nus-coursereg-tracker.git
+   git remote add origin https://github.com/weiguanglok/Coursereg_Tracker.git
    git branch -M main
    git push -u origin main
    ```
@@ -64,7 +64,7 @@ You can publish this project to GitHub Pages in under 2 minutes:
    - Under **Build and deployment** &gt; **Source**, select **Deploy from a branch**.
    - Select branch: `main` and folder: `/ (root)`.
    - Click **Save**.
-5. Your site will be live at: `https://<YOUR_USERNAME>.github.io/nus-coursereg-tracker/` !
+5. Your site will be live at: `https://weiguanglok.github.io/Coursereg_Tracker/` !
 
 ---
 
