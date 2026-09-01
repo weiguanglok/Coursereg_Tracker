@@ -481,6 +481,18 @@ select:focus {
   border: 1px solid #a7f3d0;
 }
 
+.badge-su {
+  background-color: #ede9fe;
+  color: #6d28d9;
+  border: 1px solid #ddd6fe;
+}
+
+.badge-cscu {
+  background-color: #e0f2fe;
+  color: #0369a1;
+  border: 1px solid #bae6fd;
+}
+
 /* Card Metrics Grid */
 .card-metrics {
   display: grid;

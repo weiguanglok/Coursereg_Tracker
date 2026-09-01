@@ -267,4 +267,13 @@ if __name__ == "__main__":
     PDF_FOLDER = r"C:\Users\stamp\Downloads\Course Vacancy Reports"
     OUTPUT_DIR = r"C:\Users\stamp\.gemini\antigravity\scratch\nus-coursereg-tracker\data"
     build_database(PDF_FOLDER, OUTPUT_DIR)
+    print("\n--- Running NUSMods API Canonical Enrichment ---")
+    try:
+        import subprocess
+        import sys
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+        enrich_script = os.path.join(script_dir, "enrich_from_nusmods.py")
+        subprocess.run([sys.executable, enrich_script], check=True)
+    except Exception as e:
+        print(f"Enrichment note: {e}")
 

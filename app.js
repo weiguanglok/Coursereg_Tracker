@@ -13,6 +13,7 @@ const searchInput = document.getElementById('search-input');
 const clearSearchBtn = document.getElementById('clear-search-btn');
 const periodSelect = document.getElementById('period-select');
 const facultySelect = document.getElementById('faculty-select');
+const gradingSelect = document.getElementById('grading-select');
 const sortSelect = document.getElementById('sort-select');
 const oversubscribedToggle = document.getElementById('oversubscribed-toggle');
 const coursesGrid = document.getElementById('courses-grid');
@@ -30,6 +31,9 @@ const modalCode = document.getElementById('modal-code');
 const modalTitle = document.getElementById('modal-title');
 const modalFaculty = document.getElementById('modal-faculty');
 const modalDept = document.getElementById('modal-dept');
+const modalCredits = document.getElementById('modal-credits');
+const modalSu = document.getElementById('modal-su');
+const modalCscu = document.getElementById('modal-cscu');
 const nusmodsLink = document.getElementById('nusmods-link');
 const msVacancy = document.getElementById('ms-vacancy');
 const msDemand = document.getElementById('ms-demand');
@@ -139,6 +143,11 @@ function setupEventListeners() {
     applyFiltersAndRender();
   });
 
+  gradingSelect.addEventListener('change', () => {
+    currentPage = 1;
+    applyFiltersAndRender();
+  });
+
   sortSelect.addEventListener('change', () => {
     currentPage = 1;
     applyFiltersAndRender();
@@ -193,6 +202,7 @@ let filteredCourses = [];
 function applyFiltersAndRender() {
   const query = searchInput.value.trim().toUpperCase();
   const selectedFaculty = facultySelect.value;
+  const selectedGrading = gradingSelect ? gradingSelect.value : 'ALL';
   const oversubscribedOnly = oversubscribedToggle.checked;
   const sortMode = sortSelect.value;
 
@@ -234,6 +244,11 @@ function applyFiltersAndRender() {
     if (selectedFaculty !== 'ALL') {
       if (course.faculty !== selectedFaculty) continue;
     }
+
+    // Match Grading Basis
+    if (selectedGrading === 'SU' && !course.su) continue;
+    if (selectedGrading === 'CSCU' && !course.cscu) continue;
+    if (selectedGrading === 'GRADED' && course.cscu) continue;
 
     // Match Oversubscribed Only
     if (oversubscribedOnly) {
@@ -393,11 +408,15 @@ function createCourseCard(code, course, curRound) {
   card.innerHTML = `
     <div class="course-card-top">
       <div class="course-header-line">
-        <span class="course-code">${code}</span>
+        <div style="display:flex; align-items:center; gap:0.4rem; flex-wrap:wrap;">
+          <span class="course-code">${code}</span>
+          ${course.su ? '<span class="badge badge-su" title="S/U Option Available">S/U</span>' : ''}
+          ${course.cscu ? '<span class="badge badge-cscu" title="CS/CU (Completed Satisfactory/Unsatisfactory)">CS/CU</span>' : ''}
+        </div>
         ${badgeHtml}
       </div>
       <h3 class="course-title">${course.title || 'Untitled Course'}</h3>
-      <div class="course-fac-dept">${course.faculty || 'NUS'} ${course.dept ? '&bull; ' + course.dept : ''}</div>
+      <div class="course-fac-dept">${course.faculty || 'NUS'}${course.dept ? ' &bull; ' + course.dept : ''}${course.credits ? ' &bull; ' + course.credits + ' Units' : ''}</div>
     </div>
 
     <div>
@@ -469,6 +488,14 @@ function openCourseModal(code) {
   modalTitle.textContent = course.title || 'Course Details';
   modalFaculty.textContent = course.faculty || 'NUS';
   modalDept.textContent = course.dept || 'General';
+  if (course.credits) {
+    modalCredits.textContent = `${course.credits} Units`;
+    modalCredits.style.display = 'inline-flex';
+  } else {
+    modalCredits.style.display = 'none';
+  }
+  modalSu.style.display = course.su ? 'inline-flex' : 'none';
+  modalCscu.style.display = course.cscu ? 'inline-flex' : 'none';
   nusmodsLink.href = `https://nusmods.com/courses/${encodeURIComponent(code)}`;
 
   const curRound = course.history[currentPeriodKey];

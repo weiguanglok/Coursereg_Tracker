@@ -65,6 +65,16 @@
           </div>
 
           <div class="filter-group">
+            <label for="grading-select">Grading Basis:</label>
+            <select id="grading-select">
+              <option value="ALL">All Grading Types</option>
+              <option value="SU">S/U Eligible Only</option>
+              <option value="CSCU">CS/CU (Completed S/U)</option>
+              <option value="GRADED">Standard Letter Graded</option>
+            </select>
+          </div>
+
+          <div class="filter-group">
             <label for="sort-select">Sort By:</label>
             <select id="sort-select">
               <option value="ratio_desc">Oversubscription Ratio (Highest first)</option>
@@ -140,6 +150,9 @@
             <div class="modal-tags">
               <span class="badge" id="modal-faculty">Faculty</span>
               <span class="badge badge-outline" id="modal-dept">Department</span>
+              <span class="badge badge-outline" id="modal-credits" style="display:none;">4 Units</span>
+              <span class="badge badge-su" id="modal-su" style="display:none;">S/U Option</span>
+              <span class="badge badge-cscu" id="modal-cscu" style="display:none;">CS/CU Graded</span>
             </div>
             <h2 id="modal-code">CS2040C</h2>
             <h3 id="modal-title">Data Structures and Algorithms</h3>
