@@ -4,8 +4,6 @@ An interactive, responsive web application for NUS students to search course dem
 
 Designed to be hosted directly on **GitHub Pages** with zero backend infrastructure.
 
-![Screenshot / Demo Preview](https://raw.githubusercontent.com/nusmodifications/nusmods/master/packages/nusmods/src/assets/img/hero.png)
-
 ---
 
 ## 🌟 Key Features
