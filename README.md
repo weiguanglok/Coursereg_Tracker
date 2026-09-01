@@ -1,12 +1,12 @@
 # NUS CourseReg Vacancy & Demand Tracker 📊
 
-[![Live Demo](https://img.shields.io/badge/Live%20Demo-GitHub%20Pages-003d7c?style=for-the-badge&logo=github)](https://weiguanglok.github.io/Coursereg_Tracker/)
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-Vercel-black?style=for-the-badge&logo=vercel&logoColor=white)](https://coursereg-tracker.vercel.app/)
 [![Vibecoded](https://img.shields.io/badge/Vibecoded%20with-Antigravity%20%26%20Gemini-7928CA?style=for-the-badge&logo=google&logoColor=white)](https://deepmind.google/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](LICENSE)
 
 An interactive, responsive web application for NUS students to search course demand and vacancies, see oversubscription ratios, analyze historical competition trends, and compare metrics year-over-year.
 
-🌐 **Live Website**: [https://weiguanglok.github.io/Coursereg_Tracker/](https://weiguanglok.github.io/Coursereg_Tracker/)
+🌐 **Live Website**: [https://coursereg-tracker.vercel.app/](https://coursereg-tracker.vercel.app/)
 
 ---
 
