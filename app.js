@@ -457,8 +457,8 @@ function createCourseCard(code, course, curRound) {
 
     if (curRound.vacancy === 0) {
       if (curRound.demand > 0) {
-        badgeHtml = `<span class="badge badge-oversubscribed">No Seats (${curRound.demand} Dem)</span>`;
-        ratioPct = 'No Seats';
+        badgeHtml = `<span class="badge badge-oversubscribed">0 Seats (+${curRound.demand} Shortfall)</span>`;
+        ratioPct = `+${curRound.demand} Shortfall`;
         ratioClass = 'val-danger';
       } else {
         badgeHtml = `<span class="badge badge-outline">0 Vacancy</span>`;
@@ -466,15 +466,18 @@ function createCourseCard(code, course, curRound) {
       }
     } else {
       const pct = Math.round(curRound.ratio * 100);
-      ratioPct = `${pct}%`;
+      const shortfall = curRound.demand - curRound.vacancy;
 
       if (curRound.ratio > 1.0) {
-        badgeHtml = `<span class="badge badge-oversubscribed">${curRound.ratio.toFixed(2)}x Oversubscribed</span>`;
+        badgeHtml = `<span class="badge badge-oversubscribed">${curRound.ratio.toFixed(2)}x (+${shortfall} Shortfall)</span>`;
+        ratioPct = `${curRound.ratio.toFixed(2)}x (+${shortfall})`;
         ratioClass = 'val-danger';
       } else if (curRound.ratio >= 0.8) {
         badgeHtml = `<span class="badge badge-warning">${pct}% Demand</span>`;
+        ratioPct = `${pct}%`;
       } else {
         badgeHtml = `<span class="badge badge-available">Seats Available (${pct}%)</span>`;
+        ratioPct = `${pct}%`;
       }
     }
   } else {
@@ -537,7 +540,7 @@ function createCourseCard(code, course, curRound) {
           <span class="cm-val ${ratioClass}">${demandVal}</span>
         </div>
         <div class="card-metric-col">
-          <span class="cm-label">Ratio</span>
+          <span class="cm-label">Competition</span>
           <span class="cm-val ${ratioClass}">${ratioPct}</span>
         </div>
       </div>
@@ -664,9 +667,14 @@ function openCourseModal(code) {
     msVacancy.textContent = curRound.vacancy.toLocaleString();
     msDemand.textContent = curRound.demand.toLocaleString();
     if (curRound.vacancy === 0) {
-      msRatio.textContent = curRound.demand > 0 ? 'No Seats (Full)' : '-';
+      msRatio.textContent = curRound.demand > 0 ? `+${curRound.demand} Shortfall (0 Seats)` : '0 Seats';
     } else {
-      msRatio.textContent = `${(curRound.ratio * 100).toFixed(0)}% (${curRound.ratio.toFixed(2)}x)`;
+      const shortfall = curRound.demand - curRound.vacancy;
+      if (curRound.ratio > 1.0) {
+        msRatio.textContent = `${(curRound.ratio * 100).toFixed(0)}% (${curRound.ratio.toFixed(2)}x • +${shortfall} shortfall)`;
+      } else {
+        msRatio.textContent = `${(curRound.ratio * 100).toFixed(0)}% (${curRound.ratio.toFixed(2)}x)`;
+      }
     }
     msQuotaExceeded.textContent = curRound.unalloc_quota.toLocaleString();
   } else {
@@ -714,13 +722,18 @@ function populateHistoryTable(course) {
 
     if (h.vacancy === 0) {
       if (h.demand > 0) {
-        ratioDisplay = 'No Seats';
+        ratioDisplay = `+${h.demand} Shortfall (0 Seats)`;
         ratioClass = 'text-danger font-bold';
       }
     } else {
       const pct = (h.ratio * 100).toFixed(0);
-      ratioDisplay = `${pct}% (${h.ratio.toFixed(2)}x)`;
-      if (h.ratio > 1.0) ratioClass = 'text-danger font-bold';
+      const shortfall = h.demand - h.vacancy;
+      if (h.ratio > 1.0) {
+        ratioDisplay = `${pct}% (${h.ratio.toFixed(2)}x • +${shortfall})`;
+        ratioClass = 'text-danger font-bold';
+      } else {
+        ratioDisplay = `${pct}% (${h.ratio.toFixed(2)}x)`;
+      }
     }
 
     const row = document.createElement('tr');
@@ -755,10 +768,11 @@ function populateClassesTable(curRound) {
     let isOver = false;
 
     if (c.vac > 0) {
-      ratio = `${(c.dem / c.vac).toFixed(2)}x`;
+      const shortfall = c.dem - c.vac;
       isOver = c.dem > c.vac;
+      ratio = isOver ? `${(c.dem / c.vac).toFixed(2)}x (+${shortfall})` : `${(c.dem / c.vac).toFixed(2)}x`;
     } else if (c.dem > 0) {
-      ratio = 'No Seats';
+      ratio = `+${c.dem} Shortfall`;
       isOver = true;
     }
 
@@ -790,21 +804,27 @@ function updateYoYInsight(course, semNum) {
 
   if (!curr && !past) {
     yoyInsightBox.innerHTML = `
-      <div class="yoy-insight-title">ℹ️ Round 1 History (Sem ${semNum})</div>
+      <div class="yoy-insight-title">ℹ️ Round 1 Status (Semester ${semNum})</div>
       <div>No Round 1 registration activity recorded for Semester ${semNum}.</div>
     `;
     return;
   }
 
   if (curr && !past) {
+    const isOver = curr.vacancy === 0 ? curr.demand > 0 : curr.demand > curr.vacancy;
+    const shortfall = curr.demand - curr.vacancy;
+    const compText = curr.vacancy === 0
+      ? `0 Seats (+${curr.demand} Shortfall)`
+      : `${(curr.ratio * 100).toFixed(0)}% (${curr.ratio.toFixed(2)}x ${isOver ? '• +' + shortfall + ' Shortfall' : ''})`;
+
     yoyInsightBox.innerHTML = `
-      <div class="yoy-insight-title">📌 Round 1 Status (AY26/27 Sem ${semNum})</div>
+      <div class="yoy-insight-title">💡 Round 1 Status (AY26/27 Sem ${semNum})</div>
       <div class="yoy-insight-metrics">
-        <div class="yoy-metric-item">Current Demand: <strong>${curr.demand} applications</strong></div>
-        <div class="yoy-metric-item">Current Vacancy: <strong>${curr.vacancy} seats</strong></div>
-        <div class="yoy-metric-item">Competition: <strong>${curr.vacancy > 0 ? (curr.ratio * 100).toFixed(0) + '% (' + curr.ratio.toFixed(2) + 'x)' : 'No Seats'}</strong></div>
+        <div class="yoy-metric-item">Demand: <strong>${curr.demand} applications</strong></div>
+        <div class="yoy-metric-item">Available Seats: <strong>${curr.vacancy}</strong></div>
+        <div class="yoy-metric-item">Competition: <strong class="${isOver ? 'text-danger' : ''}">${compText}</strong></div>
       </div>
-      <div class="yoy-verdict"><em>Not offered in Round 1 during AY25/26.</em></div>
+      <div class="yoy-verdict">ℹ️ <strong>Newly Offered in Round 1:</strong> Not offered in Round 1 during AY25/26. ${isOver ? `<strong>+${shortfall} students</strong> were unallocated due to quota limits.` : 'All applicants secured seats.'}</div>
     `;
     return;
   }
@@ -814,8 +834,8 @@ function updateYoYInsight(course, semNum) {
       <div class="yoy-insight-title">📌 Past Round 1 Status (AY25/26 Sem ${semNum})</div>
       <div class="yoy-insight-metrics">
         <div class="yoy-metric-item">Past Demand: <strong>${past.demand}</strong></div>
-        <div class="yoy-metric-item">Past Vacancy: <strong>${past.vacancy}</strong></div>
-        <div class="yoy-metric-item">Past Ratio: <strong>${past.vacancy > 0 ? past.ratio.toFixed(2) + 'x' : 'No Seats'}</strong></div>
+        <div class="yoy-metric-item">Past Seats: <strong>${past.vacancy}</strong></div>
+        <div class="yoy-metric-item">Past Competition: <strong>${past.vacancy === 0 ? '0 Seats (+ ' + past.demand + ' Shortfall)' : past.ratio.toFixed(2) + 'x'}</strong></div>
       </div>
       <div class="yoy-verdict"><em>No applications recorded for Round 1 in AY26/27 yet.</em></div>
     `;
@@ -831,19 +851,22 @@ function updateYoYInsight(course, semNum) {
   const vacPct = past.vacancy > 0 ? ((vacDiff / past.vacancy) * 100).toFixed(1) : (curr.vacancy > 0 ? '+100' : '0');
   const vacSign = vacDiff > 0 ? `+${vacDiff}` : `${vacDiff}`;
 
+  const currShortfall = curr.demand - curr.vacancy;
+  const pastShortfall = past.demand - past.vacancy;
+
   let trendVerdict = '';
   if (curr.vacancy === 0 && past.vacancy === 0) {
-    trendVerdict = `0 vacancies in both years (Demand shifted by ${demSign}).`;
+    trendVerdict = `⚠️ <strong>0 Seats in both years:</strong> Unmet demand shifted by <strong>${demSign}</strong> (${curr.demand} vs ${past.demand} applicants).`;
   } else if (curr.vacancy === 0) {
-    trendVerdict = `⚠️ <strong>Seats Closed:</strong> Vacancies dropped to 0 this year with ${curr.demand} applications waiting.`;
+    trendVerdict = `⚠️ <strong>Seats Closed (0 Vacancy):</strong> Resulted in <strong>+${curr.demand} unmet shortfall</strong> (100% quota rejection).`;
   } else if (past.vacancy === 0) {
-    trendVerdict = `🎉 <strong>Seats Opened:</strong> Vacancy increased from 0 to ${curr.vacancy} seats!`;
+    trendVerdict = `🎉 <strong>Seats Opened:</strong> Capacity expanded from 0 to <strong>${curr.vacancy} seats</strong> with ${curr.demand} applicants!`;
   } else {
     const ratioDiff = curr.ratio - past.ratio;
     if (curr.ratio > past.ratio + 0.1) {
-      trendVerdict = `⚠️ <strong>Higher Competition:</strong> Competition rose by <strong>+${ratioDiff.toFixed(2)}x</strong> over last year. Demand changed by <strong>${demSign} (${demPct}%)</strong> vs vacancy change of <strong>${vacSign} (${vacPct}%)</strong>.`;
+      trendVerdict = `⚠️ <strong>Higher Competition:</strong> Competition rose by <strong>+${ratioDiff.toFixed(2)}x</strong> over last year (+${currShortfall} shortfall vs ${pastShortfall > 0 ? '+' + pastShortfall : '0'}). Demand changed by <strong>${demSign} (${demPct}%)</strong> vs seats <strong>${vacSign} (${vacPct}%)</strong>.`;
     } else if (curr.ratio < past.ratio - 0.1) {
-      trendVerdict = `📉 <strong>Easier to Secure:</strong> Competition dropped by <strong>${Math.abs(ratioDiff).toFixed(2)}x</strong> compared to last year. Available seats changed by <strong>${vacSign} (${vacPct}%)</strong> while applications shifted by <strong>${demSign} (${demPct}%)</strong>.`;
+      trendVerdict = `📉 <strong>Easier to Secure:</strong> Competition dropped by <strong>${Math.abs(ratioDiff).toFixed(2)}x</strong> compared to last year. Available seats changed by <strong>${vacSign} (${vacPct}%)</strong> while demand shifted by <strong>${demSign} (${demPct}%)</strong>.`;
     } else {
       trendVerdict = `⚖️ <strong>Stable Competition:</strong> Competition remained very close to last year (${curr.ratio.toFixed(2)}x vs ${past.ratio.toFixed(2)}x).`;
     }
@@ -854,8 +877,8 @@ function updateYoYInsight(course, semNum) {
       <span>💡 Round 1 Year-over-Year Insight (Semester ${semNum})</span>
     </div>
     <div class="yoy-insight-metrics">
-      <div class="yoy-metric-item">Past Year (AY25/26): <strong>${past.demand} Demand</strong> / ${past.vacancy} Seats (${past.vacancy > 0 ? past.ratio.toFixed(2) + 'x' : '0 Seats'})</div>
-      <div class="yoy-metric-item">Current Year (AY26/27): <strong>${curr.demand} Demand</strong> / ${curr.vacancy} Seats (${curr.vacancy > 0 ? curr.ratio.toFixed(2) + 'x' : '0 Seats'})</div>
+      <div class="yoy-metric-item">Past Year (AY25/26): <strong>${past.demand} Demand</strong> / ${past.vacancy} Seats (${past.vacancy === 0 ? '0 Seats' : past.ratio.toFixed(2) + 'x'})</div>
+      <div class="yoy-metric-item">Current Year (AY26/27): <strong>${curr.demand} Demand</strong> / ${curr.vacancy} Seats (${curr.vacancy === 0 ? '0 Seats' : curr.ratio.toFixed(2) + 'x'})</div>
     </div>
     <div class="yoy-verdict">${trendVerdict}</div>
   `;
@@ -876,7 +899,7 @@ function renderHistoricalChart(course) {
     if (chartSectionTitle) chartSectionTitle.textContent = `Semester ${semNum} Year-over-Year Comparison`;
     if (chartSectionSub) {
       chartSectionSub.textContent = course.sem_offered === 'both'
-        ? `Comparing AY25/26 Sem ${semNum} vs AY26/27 Sem ${semNum} across rounds`
+        ? `Comparing Demand (Applications) vs Vacancy (Seats) between AY25/26 Sem ${semNum} and AY26/27 Sem ${semNum}`
         : `Comparing AY25/26 vs AY26/27 (Sem ${semNum === 1 ? 2 : 1} hidden as module is not offered in that semester)`;
     }
 
@@ -905,7 +928,7 @@ function renderHistoricalChart(course) {
         labels: labels,
         datasets: [
           {
-            label: `AY25/26 Sem ${semNum} Demand`,
+            label: `AY25/26 S${semNum} Demand`,
             data: pastDem,
             backgroundColor: 'rgba(245, 158, 11, 0.85)',
             borderColor: '#d97706',
@@ -913,7 +936,7 @@ function renderHistoricalChart(course) {
             borderRadius: 4
           },
           {
-            label: `AY25/26 Sem ${semNum} Vacancy`,
+            label: `AY25/26 S${semNum} Vacancy`,
             data: pastVac,
             backgroundColor: 'rgba(148, 163, 184, 0.75)',
             borderColor: '#64748b',
@@ -921,7 +944,7 @@ function renderHistoricalChart(course) {
             borderRadius: 4
           },
           {
-            label: `AY26/27 Sem ${semNum} Demand`,
+            label: `AY26/27 S${semNum} Demand`,
             data: currDem,
             backgroundColor: 'rgba(239, 124, 0, 0.95)',
             borderColor: '#c2410c',
@@ -929,7 +952,7 @@ function renderHistoricalChart(course) {
             borderRadius: 4
           },
           {
-            label: `AY26/27 Sem ${semNum} Vacancy`,
+            label: `AY26/27 S${semNum} Vacancy`,
             data: currVac,
             backgroundColor: 'rgba(0, 61, 124, 0.95)',
             borderColor: '#002752',
@@ -976,7 +999,7 @@ function renderHistoricalChart(course) {
   } else {
     // Timeline mode: only include active rounds where course actually had demand or vacancy
     if (chartSectionTitle) chartSectionTitle.textContent = 'Active Registration Timeline';
-    if (chartSectionSub) chartSectionSub.textContent = 'Chronological history showing only rounds with registration activity';
+    if (chartSectionSub) chartSectionSub.textContent = 'Demand (Applications) vs Vacancy (Seats) across active rounds';
 
     if (yoyInsightBox) {
       yoyInsightBox.innerHTML = `
@@ -998,7 +1021,6 @@ function renderHistoricalChart(course) {
     const labels = [];
     const vacancyData = [];
     const demandData = [];
-    const allocatedData = [];
 
     activePeriods.forEach(p => {
       const h = course.history[p.key];
@@ -1006,7 +1028,6 @@ function renderHistoricalChart(course) {
       labels.push(`${shortAy} S${p.semester} R${p.round}`);
       vacancyData.push(h.vacancy);
       demandData.push(h.demand);
-      allocatedData.push(h.alloc_main);
     });
 
     activeChart = new Chart(ctx, {
@@ -1023,18 +1044,10 @@ function renderHistoricalChart(course) {
             borderRadius: 4
           },
           {
-            label: 'Available Vacancy',
+            label: 'Available Vacancy (Seats)',
             data: vacancyData,
-            backgroundColor: 'rgba(0, 61, 124, 0.75)',
+            backgroundColor: 'rgba(0, 61, 124, 0.85)',
             borderColor: '#003d7c',
-            borderWidth: 1,
-            borderRadius: 4
-          },
-          {
-            label: 'Allocated (Main)',
-            data: allocatedData,
-            backgroundColor: 'rgba(16, 185, 129, 0.75)',
-            borderColor: '#10b981',
             borderWidth: 1,
             borderRadius: 4
           }
