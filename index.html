@@ -75,6 +75,16 @@
           </div>
 
           <div class="filter-group">
+            <label for="sem-filter-select">Offered In:</label>
+            <select id="sem-filter-select">
+              <option value="ALL">All Semesters</option>
+              <option value="sem1">Semester 1 Only</option>
+              <option value="sem2">Semester 2 Only</option>
+              <option value="both">Both Semesters</option>
+            </select>
+          </div>
+
+          <div class="filter-group">
             <label for="sort-select">Sort By:</label>
             <select id="sort-select">
               <option value="ratio_desc">Oversubscription Ratio (Highest first)</option>
@@ -150,6 +160,7 @@
             <div class="modal-tags">
               <span class="badge" id="modal-faculty">Faculty</span>
               <span class="badge badge-outline" id="modal-dept">Department</span>
+              <span class="badge" id="modal-sem-offered">Sem 1 Only</span>
               <span class="badge badge-outline" id="modal-credits" style="display:none;">4 Units</span>
               <span class="badge badge-su" id="modal-su" style="display:none;">S/U Option</span>
               <span class="badge badge-cscu" id="modal-cscu" style="display:none;">CS/CU Graded</span>
@@ -183,10 +194,23 @@
 
           <!-- Historical Comparison Chart Section -->
           <div class="comparison-section">
-            <div class="section-title-row">
-              <h4>Year-over-Year & Round Comparison</h4>
-              <span class="section-subtitle">Compare Vacancy vs Demand across past year (AY25/26) and current year (AY26/27)</span>
+            <div class="chart-header-controls">
+              <div class="section-title-row" style="margin-bottom: 0;">
+                <h4 id="chart-section-title">Year-over-Year & Round Comparison</h4>
+                <span class="section-subtitle" id="chart-section-sub">Side-by-side past year (AY25/26) vs current year (AY26/27)</span>
+              </div>
+              <div class="chart-view-toggle" id="chart-view-toggle">
+                <button type="button" class="view-toggle-btn active" id="btn-view-s1">Sem 1 YoY</button>
+                <button type="button" class="view-toggle-btn" id="btn-view-s2">Sem 2 YoY</button>
+                <button type="button" class="view-toggle-btn" id="btn-view-timeline">Timeline (Active)</button>
+              </div>
             </div>
+
+            <!-- Visual YoY Insight Box -->
+            <div class="yoy-insight-box" id="yoy-insight-box">
+              <!-- Dynamically populated with clear YoY verdict -->
+            </div>
+
             <div class="chart-container">
               <canvas id="historicalChart"></canvas>
             </div>

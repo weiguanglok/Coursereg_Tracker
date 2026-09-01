@@ -11,9 +11,11 @@ const ITEMS_PER_PAGE = 24;
 // DOM Elements
 const searchInput = document.getElementById('search-input');
 const clearSearchBtn = document.getElementById('clear-search-btn');
+const searchShortcutHint = document.querySelector('.search-shortcut-hint');
 const periodSelect = document.getElementById('period-select');
 const facultySelect = document.getElementById('faculty-select');
 const gradingSelect = document.getElementById('grading-select');
+const semFilterSelect = document.getElementById('sem-filter-select');
 const sortSelect = document.getElementById('sort-select');
 const oversubscribedToggle = document.getElementById('oversubscribed-toggle');
 const coursesGrid = document.getElementById('courses-grid');
@@ -31,6 +33,7 @@ const modalCode = document.getElementById('modal-code');
 const modalTitle = document.getElementById('modal-title');
 const modalFaculty = document.getElementById('modal-faculty');
 const modalDept = document.getElementById('modal-dept');
+const modalSemOffered = document.getElementById('modal-sem-offered');
 const modalCredits = document.getElementById('modal-credits');
 const modalSu = document.getElementById('modal-su');
 const modalCscu = document.getElementById('modal-cscu');
@@ -42,6 +45,15 @@ const msQuotaExceeded = document.getElementById('ms-quota-exceeded');
 const historyTableBody = document.getElementById('history-table-body');
 const classesTableBody = document.getElementById('classes-table-body');
 const classBreakdownRoundName = document.getElementById('class-breakdown-round-name');
+
+// Chart Mode Controls
+const btnViewS1 = document.getElementById('btn-view-s1');
+const btnViewS2 = document.getElementById('btn-view-s2');
+const btnViewTimeline = document.getElementById('btn-view-timeline');
+const chartSectionSub = document.getElementById('chart-section-sub');
+const yoyInsightBox = document.getElementById('yoy-insight-box');
+let currentChartMode = 's1';
+let currentModalCourse = null;
 
 // Stats Elements
 const statTotalCourses = document.getElementById('stat-total-courses');
@@ -119,7 +131,11 @@ function setupSelectors() {
 // Setup Event Listeners
 function setupEventListeners() {
   searchInput.addEventListener('input', () => {
-    clearSearchBtn.style.display = searchInput.value ? 'block' : 'none';
+    const hasVal = Boolean(searchInput.value);
+    clearSearchBtn.style.display = hasVal ? 'block' : 'none';
+    if (searchShortcutHint) {
+      searchShortcutHint.style.display = hasVal ? 'none' : 'block';
+    }
     currentPage = 1;
     applyFiltersAndRender();
   });
@@ -127,6 +143,9 @@ function setupEventListeners() {
   clearSearchBtn.addEventListener('click', () => {
     searchInput.value = '';
     clearSearchBtn.style.display = 'none';
+    if (searchShortcutHint) {
+      searchShortcutHint.style.display = 'block';
+    }
     searchInput.focus();
     currentPage = 1;
     applyFiltersAndRender();
@@ -147,6 +166,43 @@ function setupEventListeners() {
     currentPage = 1;
     applyFiltersAndRender();
   });
+
+  if (semFilterSelect) {
+    semFilterSelect.addEventListener('change', () => {
+      currentPage = 1;
+      applyFiltersAndRender();
+    });
+  }
+
+  if (btnViewS1) {
+    btnViewS1.addEventListener('click', () => {
+      currentChartMode = 's1';
+      btnViewS1.classList.add('active');
+      if (btnViewS2) btnViewS2.classList.remove('active');
+      if (btnViewTimeline) btnViewTimeline.classList.remove('active');
+      if (currentModalCourse) renderHistoricalChart(currentModalCourse);
+    });
+  }
+
+  if (btnViewS2) {
+    btnViewS2.addEventListener('click', () => {
+      currentChartMode = 's2';
+      btnViewS2.classList.add('active');
+      if (btnViewS1) btnViewS1.classList.remove('active');
+      if (btnViewTimeline) btnViewTimeline.classList.remove('active');
+      if (currentModalCourse) renderHistoricalChart(currentModalCourse);
+    });
+  }
+
+  if (btnViewTimeline) {
+    btnViewTimeline.addEventListener('click', () => {
+      currentChartMode = 'timeline';
+      btnViewTimeline.classList.add('active');
+      if (btnViewS1) btnViewS1.classList.remove('active');
+      if (btnViewS2) btnViewS2.classList.remove('active');
+      if (currentModalCourse) renderHistoricalChart(currentModalCourse);
+    });
+  }
 
   sortSelect.addEventListener('change', () => {
     currentPage = 1;
@@ -203,6 +259,7 @@ function applyFiltersAndRender() {
   const query = searchInput.value.trim().toUpperCase();
   const selectedFaculty = facultySelect.value;
   const selectedGrading = gradingSelect ? gradingSelect.value : 'ALL';
+  const selectedSem = semFilterSelect ? semFilterSelect.value : 'ALL';
   const oversubscribedOnly = oversubscribedToggle.checked;
   const sortMode = sortSelect.value;
 
@@ -211,27 +268,15 @@ function applyFiltersAndRender() {
 
   // Filter courses
   filteredCourses = [];
-  let roundTotalVac = 0;
-  let roundTotalDem = 0;
-  let roundOversubscribed = 0;
-  let roundMaxRatioCourse = null;
-  let roundMaxRatio = -1;
+  let filteredRoundCoursesOffered = 0;
+  let filteredTotalVac = 0;
+  let filteredTotalDem = 0;
+  let filteredOversubscribed = 0;
+  let filteredMaxRatioCourse = null;
+  let filteredMaxRatio = -1;
 
   for (const [code, course] of Object.entries(coursesData)) {
     const curRound = course.history[currentPeriodKey];
-    
-    // Only consider courses active in current round for round overview stats
-    if (curRound) {
-      roundTotalVac += curRound.vacancy;
-      roundTotalDem += curRound.demand;
-      if (curRound.oversubscribed) {
-        roundOversubscribed++;
-      }
-      if (curRound.vacancy >= 10 && curRound.ratio > roundMaxRatio) {
-        roundMaxRatio = curRound.ratio;
-        roundMaxRatioCourse = { code, ratio: curRound.ratio, title: course.title };
-      }
-    }
 
     // Match Query
     if (query) {
@@ -250,9 +295,34 @@ function applyFiltersAndRender() {
     if (selectedGrading === 'CSCU' && !course.cscu) continue;
     if (selectedGrading === 'GRADED' && course.cscu) continue;
 
+    // Match Semester Offering
+    if (selectedSem !== 'ALL') {
+      if (course.sem_offered !== selectedSem) continue;
+    }
+
     // Match Oversubscribed Only
     if (oversubscribedOnly) {
       if (!curRound || !curRound.oversubscribed) continue;
+    }
+
+    // Accumulate metrics for courses matching this search/filter in the active round
+    if (curRound) {
+      filteredRoundCoursesOffered++;
+      filteredTotalVac += curRound.vacancy;
+      filteredTotalDem += curRound.demand;
+      if (curRound.oversubscribed) {
+        filteredOversubscribed++;
+      }
+      if (curRound.vacancy > 0 && curRound.demand > 0 && curRound.ratio > filteredMaxRatio) {
+        filteredMaxRatio = curRound.ratio;
+        filteredMaxRatioCourse = {
+          code,
+          ratio: curRound.ratio,
+          title: course.title,
+          demand: curRound.demand,
+          vacancy: curRound.vacancy
+        };
+      }
     }
 
     filteredCourses.push({
@@ -262,18 +332,29 @@ function applyFiltersAndRender() {
     });
   }
 
-  // Update Overview Dashboard Stats
-  statTotalCourses.textContent = Object.values(coursesData).filter(c => c.history[currentPeriodKey]).length.toLocaleString();
-  statPeriodName.textContent = periodLabel;
-  statOversubscribedCount.textContent = roundOversubscribed.toLocaleString();
-  const totalInRound = Object.values(coursesData).filter(c => c.history[currentPeriodKey]).length;
-  statOversubscribedPct.textContent = totalInRound > 0 ? `${((roundOversubscribed / totalInRound) * 100).toFixed(1)}% of courses` : '-';
-  statTotalDemand.textContent = roundTotalDem.toLocaleString();
-  statTotalVacancy.textContent = `vs ${roundTotalVac.toLocaleString()} Vacancies`;
+  // Update Overview Dashboard Stats based on active search & filters
+  statTotalCourses.textContent = filteredRoundCoursesOffered.toLocaleString();
   
-  if (roundMaxRatioCourse) {
-    statMostPopular.textContent = roundMaxRatioCourse.code;
-    statMostPopularRatio.textContent = `${(roundMaxRatioCourse.ratio * 100).toFixed(0)}% (${roundMaxRatioCourse.ratio.toFixed(2)}x)`;
+  // Dynamic subtitle for filter context
+  if (query) {
+    statPeriodName.textContent = `Matching "${query}" in ${periodLabel}`;
+  } else if (selectedFaculty !== 'ALL') {
+    statPeriodName.textContent = `${selectedFaculty} in ${periodLabel}`;
+  } else {
+    statPeriodName.textContent = periodLabel;
+  }
+
+  statOversubscribedCount.textContent = filteredOversubscribed.toLocaleString();
+  statOversubscribedPct.textContent = filteredRoundCoursesOffered > 0
+    ? `${((filteredOversubscribed / filteredRoundCoursesOffered) * 100).toFixed(1)}% of search`
+    : '0% of search';
+    
+  statTotalDemand.textContent = filteredTotalDem.toLocaleString();
+  statTotalVacancy.textContent = `vs ${filteredTotalVac.toLocaleString()} Vacancies`;
+
+  if (filteredMaxRatioCourse) {
+    statMostPopular.textContent = filteredMaxRatioCourse.code;
+    statMostPopularRatio.textContent = `${(filteredMaxRatioCourse.ratio * 100).toFixed(0)}% (${filteredMaxRatioCourse.ratio.toFixed(2)}x) • ${filteredMaxRatioCourse.demand} apps / ${filteredMaxRatioCourse.vacancy} seats`;
   } else {
     statMostPopular.textContent = 'None';
     statMostPopularRatio.textContent = '-';
@@ -295,6 +376,10 @@ function applyFiltersAndRender() {
 
     switch (sortMode) {
       case 'ratio_desc':
+        // If either has 0 vacancies, sink below genuine ratios
+        if (ra.vacancy === 0 && rb.vacancy === 0) return rb.demand - ra.demand;
+        if (ra.vacancy === 0) return 1;
+        if (rb.vacancy === 0) return -1;
         return rb.ratio - ra.ratio;
       case 'demand_desc':
         return rb.demand - ra.demand;
@@ -369,16 +454,28 @@ function createCourseCard(code, course, curRound) {
   if (curRound) {
     vacancyVal = curRound.vacancy.toLocaleString();
     demandVal = curRound.demand.toLocaleString();
-    const pct = Math.round(curRound.ratio * 100);
-    ratioPct = `${pct}%`;
 
-    if (curRound.ratio > 1.0) {
-      badgeHtml = `<span class="badge badge-oversubscribed">${curRound.ratio.toFixed(2)}x Oversubscribed</span>`;
-      ratioClass = 'val-danger';
-    } else if (curRound.ratio >= 0.8) {
-      badgeHtml = `<span class="badge badge-warning">${pct}% Demand</span>`;
+    if (curRound.vacancy === 0) {
+      if (curRound.demand > 0) {
+        badgeHtml = `<span class="badge badge-oversubscribed">No Seats (${curRound.demand} Dem)</span>`;
+        ratioPct = 'No Seats';
+        ratioClass = 'val-danger';
+      } else {
+        badgeHtml = `<span class="badge badge-outline">0 Vacancy</span>`;
+        ratioPct = '-';
+      }
     } else {
-      badgeHtml = `<span class="badge badge-available">Seats Available (${pct}%)</span>`;
+      const pct = Math.round(curRound.ratio * 100);
+      ratioPct = `${pct}%`;
+
+      if (curRound.ratio > 1.0) {
+        badgeHtml = `<span class="badge badge-oversubscribed">${curRound.ratio.toFixed(2)}x Oversubscribed</span>`;
+        ratioClass = 'val-danger';
+      } else if (curRound.ratio >= 0.8) {
+        badgeHtml = `<span class="badge badge-warning">${pct}% Demand</span>`;
+      } else {
+        badgeHtml = `<span class="badge badge-available">Seats Available (${pct}%)</span>`;
+      }
     }
   } else {
     badgeHtml = `<span class="badge badge-outline">Not offered this round</span>`;
@@ -405,11 +502,21 @@ function createCourseCard(code, course, curRound) {
     `;
   }
 
+  let semBadge = '';
+  if (course.sem_offered === 'sem1') {
+    semBadge = '<span class="badge badge-sem1" title="Offered in Semester 1 Only">Sem 1 Only</span>';
+  } else if (course.sem_offered === 'sem2') {
+    semBadge = '<span class="badge badge-sem2" title="Offered in Semester 2 Only">Sem 2 Only</span>';
+  } else if (course.sem_offered === 'both') {
+    semBadge = '<span class="badge badge-both" title="Offered in Both Semesters">Sem 1 & 2</span>';
+  }
+
   card.innerHTML = `
     <div class="course-card-top">
       <div class="course-header-line">
         <div style="display:flex; align-items:center; gap:0.4rem; flex-wrap:wrap;">
           <span class="course-code">${code}</span>
+          ${semBadge}
           ${course.su ? '<span class="badge badge-su" title="S/U Option Available">S/U</span>' : ''}
           ${course.cscu ? '<span class="badge badge-cscu" title="CS/CU (Completed Satisfactory/Unsatisfactory)">CS/CU</span>' : ''}
         </div>
@@ -483,11 +590,13 @@ function getPastYearComparison(course, currentKey) {
 function openCourseModal(code) {
   const course = coursesData[code];
   if (!course) return;
+  currentModalCourse = course;
 
   modalCode.textContent = code;
   modalTitle.textContent = course.title || 'Course Details';
   modalFaculty.textContent = course.faculty || 'NUS';
   modalDept.textContent = course.dept || 'General';
+
   if (course.credits) {
     modalCredits.textContent = `${course.credits} Units`;
     modalCredits.style.display = 'inline-flex';
@@ -498,6 +607,55 @@ function openCourseModal(code) {
   modalCscu.style.display = course.cscu ? 'inline-flex' : 'none';
   nusmodsLink.href = `https://nusmods.com/courses/${encodeURIComponent(code)}`;
 
+  // Semester offering badge in modal
+  if (modalSemOffered) {
+    if (course.sem_offered === 'sem1') {
+      modalSemOffered.className = 'badge badge-sem1';
+      modalSemOffered.textContent = 'Offered: Sem 1 Only';
+    } else if (course.sem_offered === 'sem2') {
+      modalSemOffered.className = 'badge badge-sem2';
+      modalSemOffered.textContent = 'Offered: Sem 2 Only';
+    } else {
+      modalSemOffered.className = 'badge badge-both';
+      modalSemOffered.textContent = 'Offered: Sem 1 & Sem 2';
+    }
+  }
+
+  // Configure chart toggle buttons & active mode based on semester offering
+  if (btnViewS1 && btnViewS2 && btnViewTimeline) {
+    if (course.sem_offered === 'sem1') {
+      btnViewS1.style.display = 'inline-block';
+      btnViewS2.style.display = 'none'; // Hide Sem 2 since not offered
+      btnViewTimeline.style.display = 'inline-block';
+      currentChartMode = 's1';
+      btnViewS1.classList.add('active');
+      btnViewS2.classList.remove('active');
+      btnViewTimeline.classList.remove('active');
+    } else if (course.sem_offered === 'sem2') {
+      btnViewS1.style.display = 'none'; // Hide Sem 1 since not offered
+      btnViewS2.style.display = 'inline-block';
+      btnViewTimeline.style.display = 'inline-block';
+      currentChartMode = 's2';
+      btnViewS2.classList.add('active');
+      btnViewS1.classList.remove('active');
+      btnViewTimeline.classList.remove('active');
+    } else {
+      btnViewS1.style.display = 'inline-block';
+      btnViewS2.style.display = 'inline-block';
+      btnViewTimeline.style.display = 'inline-block';
+      // Default to the semester of the current selected round
+      currentChartMode = currentPeriodKey.includes('_S2_') ? 's2' : 's1';
+      if (currentChartMode === 's1') {
+        btnViewS1.classList.add('active');
+        btnViewS2.classList.remove('active');
+      } else {
+        btnViewS2.classList.add('active');
+        btnViewS1.classList.remove('active');
+      }
+      btnViewTimeline.classList.remove('active');
+    }
+  }
+
   const curRound = course.history[currentPeriodKey];
   const currentPeriodMeta = (metadata.periods || []).find(p => p.key === currentPeriodKey);
   classBreakdownRoundName.textContent = currentPeriodMeta ? currentPeriodMeta.label : currentPeriodKey;
@@ -505,7 +663,11 @@ function openCourseModal(code) {
   if (curRound) {
     msVacancy.textContent = curRound.vacancy.toLocaleString();
     msDemand.textContent = curRound.demand.toLocaleString();
-    msRatio.textContent = `${(curRound.ratio * 100).toFixed(0)}% (${curRound.ratio.toFixed(2)}x)`;
+    if (curRound.vacancy === 0) {
+      msRatio.textContent = curRound.demand > 0 ? 'No Seats (Full)' : '-';
+    } else {
+      msRatio.textContent = `${(curRound.ratio * 100).toFixed(0)}% (${curRound.ratio.toFixed(2)}x)`;
+    }
     msQuotaExceeded.textContent = curRound.unalloc_quota.toLocaleString();
   } else {
     msVacancy.textContent = 'Not Offered';
@@ -514,7 +676,7 @@ function openCourseModal(code) {
     msQuotaExceeded.textContent = '-';
   }
 
-  // Populate History Table
+  // Populate History Table (filters out non-offered semesters)
   populateHistoryTable(course);
 
   // Populate Class Breakdown Table
@@ -538,19 +700,36 @@ function populateHistoryTable(course) {
   const periods = metadata.periods || [];
 
   periods.forEach(p => {
+    // If course is Sem 1 only, hide Sem 2 rows completely
+    if (course.sem_offered === 'sem1' && p.semester === 2) return;
+    // If course is Sem 2 only, hide Sem 1 rows completely
+    if (course.sem_offered === 'sem2' && p.semester === 1) return;
+
     const h = course.history[p.key];
-    if (!h) return;
+    // Skip empty rounds with 0 vacancy and 0 demand
+    if (!h || (h.vacancy === 0 && h.demand === 0)) return;
+
+    let ratioDisplay = '-';
+    let ratioClass = '';
+
+    if (h.vacancy === 0) {
+      if (h.demand > 0) {
+        ratioDisplay = 'No Seats';
+        ratioClass = 'text-danger font-bold';
+      }
+    } else {
+      const pct = (h.ratio * 100).toFixed(0);
+      ratioDisplay = `${pct}% (${h.ratio.toFixed(2)}x)`;
+      if (h.ratio > 1.0) ratioClass = 'text-danger font-bold';
+    }
 
     const row = document.createElement('tr');
-    const ratioVal = (h.ratio * 100).toFixed(0);
-    const ratioClass = h.ratio > 1.0 ? 'text-danger font-bold' : '';
-
     row.innerHTML = `
       <td><strong>${h.ay} Sem ${h.semester}</strong></td>
       <td>Round ${h.round}</td>
       <td>${h.vacancy.toLocaleString()}</td>
       <td><strong>${h.demand.toLocaleString()}</strong></td>
-      <td class="${ratioClass}">${ratioVal}% (${h.ratio.toFixed(2)}x)</td>
+      <td class="${ratioClass}">${ratioDisplay}</td>
       <td>${h.alloc_main.toLocaleString()}</td>
       <td class="${h.unalloc_quota > 0 ? 'text-danger font-bold' : ''}">${h.unalloc_quota.toLocaleString()}</td>
       <td>${(h.unalloc_clash + h.unalloc_others + h.unalloc_workload).toLocaleString()}</td>
@@ -559,7 +738,7 @@ function populateHistoryTable(course) {
   });
 
   if (historyTableBody.children.length === 0) {
-    historyTableBody.innerHTML = '<tr><td colspan="8" style="text-align:center; color:#94a3b8;">No historical records found for this course.</td></tr>';
+    historyTableBody.innerHTML = '<tr><td colspan="8" style="text-align:center; color:#94a3b8;">No active registration records found for this course.</td></tr>';
   }
 }
 
@@ -572,14 +751,23 @@ function populateClassesTable(curRound) {
   }
 
   curRound.classes.forEach(c => {
-    const ratio = c.vac > 0 ? (c.dem / c.vac).toFixed(2) : (c.dem > 0 ? 'Full' : '0.00');
-    const isOver = c.dem > c.vac;
+    let ratio = '-';
+    let isOver = false;
+
+    if (c.vac > 0) {
+      ratio = `${(c.dem / c.vac).toFixed(2)}x`;
+      isOver = c.dem > c.vac;
+    } else if (c.dem > 0) {
+      ratio = 'No Seats';
+      isOver = true;
+    }
+
     const row = document.createElement('tr');
     row.innerHTML = `
       <td><strong>${c.class}</strong></td>
       <td>${c.vac.toLocaleString()}</td>
       <td><strong>${c.dem.toLocaleString()}</strong></td>
-      <td class="${isOver ? 'text-danger font-bold' : ''}">${ratio}x</td>
+      <td class="${isOver ? 'text-danger font-bold' : ''}">${ratio}</td>
       <td>${c.main.toLocaleString()}</td>
       <td>${c.res.toLocaleString()}</td>
       <td class="${c.quota > 0 ? 'text-danger font-bold' : ''}">${c.quota.toLocaleString()}</td>
@@ -590,6 +778,89 @@ function populateClassesTable(curRound) {
   });
 }
 
+// Generate verbal & numerical YoY Insight
+function updateYoYInsight(course, semNum) {
+  if (!yoyInsightBox) return;
+
+  const pastKey = `2025/2026_S${semNum}_R1`;
+  const currKey = `2026/2027_S${semNum}_R1`;
+
+  const past = course.history[pastKey];
+  const curr = course.history[currKey];
+
+  if (!curr && !past) {
+    yoyInsightBox.innerHTML = `
+      <div class="yoy-insight-title">ℹ️ Round 1 History (Sem ${semNum})</div>
+      <div>No Round 1 registration activity recorded for Semester ${semNum}.</div>
+    `;
+    return;
+  }
+
+  if (curr && !past) {
+    yoyInsightBox.innerHTML = `
+      <div class="yoy-insight-title">📌 Round 1 Status (AY26/27 Sem ${semNum})</div>
+      <div class="yoy-insight-metrics">
+        <div class="yoy-metric-item">Current Demand: <strong>${curr.demand} applications</strong></div>
+        <div class="yoy-metric-item">Current Vacancy: <strong>${curr.vacancy} seats</strong></div>
+        <div class="yoy-metric-item">Competition: <strong>${curr.vacancy > 0 ? (curr.ratio * 100).toFixed(0) + '% (' + curr.ratio.toFixed(2) + 'x)' : 'No Seats'}</strong></div>
+      </div>
+      <div class="yoy-verdict"><em>Not offered in Round 1 during AY25/26.</em></div>
+    `;
+    return;
+  }
+
+  if (!curr && past) {
+    yoyInsightBox.innerHTML = `
+      <div class="yoy-insight-title">📌 Past Round 1 Status (AY25/26 Sem ${semNum})</div>
+      <div class="yoy-insight-metrics">
+        <div class="yoy-metric-item">Past Demand: <strong>${past.demand}</strong></div>
+        <div class="yoy-metric-item">Past Vacancy: <strong>${past.vacancy}</strong></div>
+        <div class="yoy-metric-item">Past Ratio: <strong>${past.vacancy > 0 ? past.ratio.toFixed(2) + 'x' : 'No Seats'}</strong></div>
+      </div>
+      <div class="yoy-verdict"><em>No applications recorded for Round 1 in AY26/27 yet.</em></div>
+    `;
+    return;
+  }
+
+  // Both exist!
+  const demDiff = curr.demand - past.demand;
+  const demPct = past.demand > 0 ? ((demDiff / past.demand) * 100).toFixed(1) : (curr.demand > 0 ? '+100' : '0');
+  const demSign = demDiff > 0 ? `+${demDiff}` : `${demDiff}`;
+
+  const vacDiff = curr.vacancy - past.vacancy;
+  const vacPct = past.vacancy > 0 ? ((vacDiff / past.vacancy) * 100).toFixed(1) : (curr.vacancy > 0 ? '+100' : '0');
+  const vacSign = vacDiff > 0 ? `+${vacDiff}` : `${vacDiff}`;
+
+  let trendVerdict = '';
+  if (curr.vacancy === 0 && past.vacancy === 0) {
+    trendVerdict = `0 vacancies in both years (Demand shifted by ${demSign}).`;
+  } else if (curr.vacancy === 0) {
+    trendVerdict = `⚠️ <strong>Seats Closed:</strong> Vacancies dropped to 0 this year with ${curr.demand} applications waiting.`;
+  } else if (past.vacancy === 0) {
+    trendVerdict = `🎉 <strong>Seats Opened:</strong> Vacancy increased from 0 to ${curr.vacancy} seats!`;
+  } else {
+    const ratioDiff = curr.ratio - past.ratio;
+    if (curr.ratio > past.ratio + 0.1) {
+      trendVerdict = `⚠️ <strong>Higher Competition:</strong> Competition rose by <strong>+${ratioDiff.toFixed(2)}x</strong> over last year. Demand changed by <strong>${demSign} (${demPct}%)</strong> vs vacancy change of <strong>${vacSign} (${vacPct}%)</strong>.`;
+    } else if (curr.ratio < past.ratio - 0.1) {
+      trendVerdict = `📉 <strong>Easier to Secure:</strong> Competition dropped by <strong>${Math.abs(ratioDiff).toFixed(2)}x</strong> compared to last year. Available seats changed by <strong>${vacSign} (${vacPct}%)</strong> while applications shifted by <strong>${demSign} (${demPct}%)</strong>.`;
+    } else {
+      trendVerdict = `⚖️ <strong>Stable Competition:</strong> Competition remained very close to last year (${curr.ratio.toFixed(2)}x vs ${past.ratio.toFixed(2)}x).`;
+    }
+  }
+
+  yoyInsightBox.innerHTML = `
+    <div class="yoy-insight-title">
+      <span>💡 Round 1 Year-over-Year Insight (Semester ${semNum})</span>
+    </div>
+    <div class="yoy-insight-metrics">
+      <div class="yoy-metric-item">Past Year (AY25/26): <strong>${past.demand} Demand</strong> / ${past.vacancy} Seats (${past.vacancy > 0 ? past.ratio.toFixed(2) + 'x' : '0 Seats'})</div>
+      <div class="yoy-metric-item">Current Year (AY26/27): <strong>${curr.demand} Demand</strong> / ${curr.vacancy} Seats (${curr.vacancy > 0 ? curr.ratio.toFixed(2) + 'x' : '0 Seats'})</div>
+    </div>
+    <div class="yoy-verdict">${trendVerdict}</div>
+  `;
+}
+
 // Render Comparison Chart with Chart.js
 function renderHistoricalChart(course) {
   const ctx = document.getElementById('historicalChart').getContext('2d');
@@ -597,105 +868,206 @@ function renderHistoricalChart(course) {
     activeChart.destroy();
   }
 
-  const periods = metadata.periods || [];
-  const labels = [];
-  const vacancyData = [];
-  const demandData = [];
-  const allocatedData = [];
-  const quotaExceededData = [];
+  const chartSectionTitle = document.getElementById('chart-section-title');
 
-  periods.forEach(p => {
-    const h = course.history[p.key];
-    // Short label: e.g. "25/26 S1 R1"
-    const shortAy = p.ay.replace(/AY/g, '').replace(/20(\d\d)/g, '$1');
-    labels.push(`${shortAy} S${p.semester} R${p.round}`);
-    
-    if (h) {
-      vacancyData.push(h.vacancy);
-      demandData.push(h.demand);
-      allocatedData.push(h.alloc_main);
-      quotaExceededData.push(h.unalloc_quota);
-    } else {
-      vacancyData.push(0);
-      demandData.push(0);
-      allocatedData.push(0);
-      quotaExceededData.push(0);
+  if (currentChartMode === 's1' || currentChartMode === 's2') {
+    const semNum = currentChartMode === 's2' ? 2 : 1;
+
+    if (chartSectionTitle) chartSectionTitle.textContent = `Semester ${semNum} Year-over-Year Comparison`;
+    if (chartSectionSub) {
+      chartSectionSub.textContent = course.sem_offered === 'both'
+        ? `Comparing AY25/26 Sem ${semNum} vs AY26/27 Sem ${semNum} across rounds`
+        : `Comparing AY25/26 vs AY26/27 (Sem ${semNum === 1 ? 2 : 1} hidden as module is not offered in that semester)`;
     }
-  });
 
-  activeChart = new Chart(ctx, {
-    type: 'bar',
-    data: {
-      labels: labels,
-      datasets: [
-        {
-          label: 'Demand (Applications)',
-          data: demandData,
-          backgroundColor: 'rgba(239, 124, 0, 0.85)',
-          borderColor: '#ef7c00',
-          borderWidth: 1,
-          borderRadius: 4
-        },
-        {
-          label: 'Available Vacancy',
-          data: vacancyData,
-          backgroundColor: 'rgba(0, 61, 124, 0.75)',
-          borderColor: '#003d7c',
-          borderWidth: 1,
-          borderRadius: 4
-        },
-        {
-          label: 'Allocated (Main)',
-          data: allocatedData,
-          backgroundColor: 'rgba(16, 185, 129, 0.75)',
-          borderColor: '#10b981',
-          borderWidth: 1,
-          borderRadius: 4
-        }
-      ]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      interaction: {
-        mode: 'index',
-        intersect: false
+    // Update the insight summary box
+    updateYoYInsight(course, semNum);
+
+    const labels = ['Round 1', 'Round 2', 'Round 3'];
+    const pastDem = [];
+    const pastVac = [];
+    const currDem = [];
+    const currVac = [];
+
+    [1, 2, 3].forEach(r => {
+      const pastH = course.history[`2025/2026_S${semNum}_R${r}`];
+      const currH = course.history[`2026/2027_S${semNum}_R${r}`];
+
+      pastDem.push(pastH ? pastH.demand : 0);
+      pastVac.push(pastH ? pastH.vacancy : 0);
+      currDem.push(currH ? currH.demand : 0);
+      currVac.push(currH ? currH.vacancy : 0);
+    });
+
+    activeChart = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: labels,
+        datasets: [
+          {
+            label: `AY25/26 Sem ${semNum} Demand`,
+            data: pastDem,
+            backgroundColor: 'rgba(245, 158, 11, 0.85)',
+            borderColor: '#d97706',
+            borderWidth: 1,
+            borderRadius: 4
+          },
+          {
+            label: `AY25/26 Sem ${semNum} Vacancy`,
+            data: pastVac,
+            backgroundColor: 'rgba(148, 163, 184, 0.75)',
+            borderColor: '#64748b',
+            borderWidth: 1,
+            borderRadius: 4
+          },
+          {
+            label: `AY26/27 Sem ${semNum} Demand`,
+            data: currDem,
+            backgroundColor: 'rgba(239, 124, 0, 0.95)',
+            borderColor: '#c2410c',
+            borderWidth: 1,
+            borderRadius: 4
+          },
+          {
+            label: `AY26/27 Sem ${semNum} Vacancy`,
+            data: currVac,
+            backgroundColor: 'rgba(0, 61, 124, 0.95)',
+            borderColor: '#002752',
+            borderWidth: 1,
+            borderRadius: 4
+          }
+        ]
       },
-      plugins: {
-        legend: {
-          position: 'top',
-          labels: {
-            font: { family: "'Plus Jakarta Sans', sans-serif", weight: '600', size: 11 },
-            usePointStyle: true,
-            boxWidth: 8
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: { mode: 'index', intersect: false },
+        plugins: {
+          legend: {
+            position: 'top',
+            labels: {
+              font: { family: "'Plus Jakarta Sans', sans-serif", weight: '600', size: 11 },
+              usePointStyle: true,
+              boxWidth: 8
+            }
+          },
+          tooltip: {
+            backgroundColor: 'rgba(15, 23, 42, 0.95)',
+            titleFont: { family: "'Plus Jakarta Sans', sans-serif", weight: '700', size: 13 },
+            bodyFont: { family: "'Plus Jakarta Sans', sans-serif", size: 12 },
+            padding: 10,
+            cornerRadius: 6
           }
         },
-        tooltip: {
-          backgroundColor: 'rgba(15, 23, 42, 0.9)',
-          titleFont: { family: "'Plus Jakarta Sans', sans-serif", weight: '700', size: 13 },
-          bodyFont: { family: "'Plus Jakarta Sans', sans-serif", size: 12 },
-          padding: 10,
-          cornerRadius: 6
-        }
-      },
-      scales: {
-        x: {
-          grid: { display: false },
-          ticks: {
-            font: { family: "'Plus Jakarta Sans', sans-serif", size: 10 }
-          }
-        },
-        y: {
-          beginAtZero: true,
-          grid: { color: '#f1f5f9' },
-          ticks: {
-            font: { family: "'Plus Jakarta Sans', sans-serif", size: 10 },
-            precision: 0
+        scales: {
+          x: {
+            grid: { display: false },
+            ticks: { font: { family: "'Plus Jakarta Sans', sans-serif", size: 11, weight: '600' } }
+          },
+          y: {
+            beginAtZero: true,
+            grid: { color: '#f1f5f9' },
+            ticks: { font: { family: "'Plus Jakarta Sans', sans-serif", size: 10 }, precision: 0 }
           }
         }
       }
+    });
+
+  } else {
+    // Timeline mode: only include active rounds where course actually had demand or vacancy
+    if (chartSectionTitle) chartSectionTitle.textContent = 'Active Registration Timeline';
+    if (chartSectionSub) chartSectionSub.textContent = 'Chronological history showing only rounds with registration activity';
+
+    if (yoyInsightBox) {
+      yoyInsightBox.innerHTML = `
+        <div class="yoy-insight-title">ℹ️ Timeline View</div>
+        <div>Showing active rounds chronologically. Rounds where the course was not offered are omitted.</div>
+      `;
     }
-  });
+
+    const activePeriods = (metadata.periods || []).filter(p => {
+      // If Sem 1 only, hide Sem 2
+      if (course.sem_offered === 'sem1' && p.semester === 2) return false;
+      // If Sem 2 only, hide Sem 1
+      if (course.sem_offered === 'sem2' && p.semester === 1) return false;
+
+      const h = course.history[p.key];
+      return h && (h.vacancy > 0 || h.demand > 0);
+    });
+
+    const labels = [];
+    const vacancyData = [];
+    const demandData = [];
+    const allocatedData = [];
+
+    activePeriods.forEach(p => {
+      const h = course.history[p.key];
+      const shortAy = p.ay.replace(/AY/g, '').replace(/20(\d\d)/g, '$1');
+      labels.push(`${shortAy} S${p.semester} R${p.round}`);
+      vacancyData.push(h.vacancy);
+      demandData.push(h.demand);
+      allocatedData.push(h.alloc_main);
+    });
+
+    activeChart = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: labels,
+        datasets: [
+          {
+            label: 'Demand (Applications)',
+            data: demandData,
+            backgroundColor: 'rgba(239, 124, 0, 0.85)',
+            borderColor: '#ef7c00',
+            borderWidth: 1,
+            borderRadius: 4
+          },
+          {
+            label: 'Available Vacancy',
+            data: vacancyData,
+            backgroundColor: 'rgba(0, 61, 124, 0.75)',
+            borderColor: '#003d7c',
+            borderWidth: 1,
+            borderRadius: 4
+          },
+          {
+            label: 'Allocated (Main)',
+            data: allocatedData,
+            backgroundColor: 'rgba(16, 185, 129, 0.75)',
+            borderColor: '#10b981',
+            borderWidth: 1,
+            borderRadius: 4
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: { mode: 'index', intersect: false },
+        plugins: {
+          legend: {
+            position: 'top',
+            labels: {
+              font: { family: "'Plus Jakarta Sans', sans-serif", weight: '600', size: 11 },
+              usePointStyle: true,
+              boxWidth: 8
+            }
+          }
+        },
+        scales: {
+          x: {
+            grid: { display: false },
+            ticks: { font: { family: "'Plus Jakarta Sans', sans-serif", size: 10 } }
+          },
+          y: {
+            beginAtZero: true,
+            grid: { color: '#f1f5f9' },
+            ticks: { font: { family: "'Plus Jakarta Sans', sans-serif", size: 10 }, precision: 0 }
+          }
+        }
+      }
+    });
+  }
 }
 
 // Start Application on DOM Ready

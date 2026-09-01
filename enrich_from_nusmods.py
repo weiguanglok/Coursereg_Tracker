@@ -72,6 +72,22 @@ for code, c in courses.items():
         c.setdefault('cscu', False)
         c.setdefault('credits', None)
 
+    history_sems = set()
+    for period_key in c.get('history', {}):
+        if '_S1_' in period_key:
+            history_sems.add(1)
+        if '_S2_' in period_key:
+            history_sems.add(2)
+
+    if 1 in history_sems and 2 in history_sems:
+        c['sem_offered'] = 'both'
+    elif 1 in history_sems:
+        c['sem_offered'] = 'sem1'
+    elif 2 in history_sems:
+        c['sem_offered'] = 'sem2'
+    else:
+        c['sem_offered'] = 'unknown'
+
     if c.get('su'):
         su_count += 1
     if c.get('cscu'):
@@ -107,3 +123,4 @@ with open(meta_path, "w", encoding="utf-8") as f:
     json.dump(meta, f, indent=2)
 
 print("Saved enriched data to coursereg_data.json and metadata.json successfully!")
+

@@ -215,7 +215,8 @@ def build_database(pdf_folder, output_dir):
         for code, agg_data in period_course_agg.items():
             vac = agg_data["vacancy"]
             dem = agg_data["demand"]
-            ratio = round(dem / vac, 2) if vac > 0 else (999.0 if dem > 0 else 0.0)
+            ratio = round(dem / vac, 2) if vac > 0 else 0.0
+            no_vacancy = (vac == 0 and dem > 0)
             diff = dem - vac
             oversubscribed = dem > vac
 
