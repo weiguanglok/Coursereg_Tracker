@@ -1,8 +1,12 @@
 # NUS CourseReg Vacancy & Demand Tracker 📊
 
-An interactive, responsive web application for NUS students to search course demand and vacancies, see oversubscription ratios, and analyze historical registration trends across CourseReg rounds and past academic years.
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-GitHub%20Pages-003d7c?style=for-the-badge&logo=github)](https://weiguanglok.github.io/Coursereg_Tracker/)
+[![Vibecoded](https://img.shields.io/badge/Vibecoded%20with-Antigravity%20%26%20Gemini-7928CA?style=for-the-badge&logo=google&logoColor=white)](https://deepmind.google/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](LICENSE)
 
-Designed to be hosted directly on **GitHub Pages** with zero backend infrastructure.
+An interactive, responsive web application for NUS students to search course demand and vacancies, see oversubscription ratios, analyze historical competition trends, and compare metrics year-over-year.
+
+🌐 **Live Website**: [https://weiguanglok.github.io/Coursereg_Tracker/](https://weiguanglok.github.io/Coursereg_Tracker/)
 
 ---
 
@@ -88,6 +92,18 @@ Open [http://localhost:8000](http://localhost:8000) in your browser.
 
 ---
 
+## ⚡ Vibecoded Declaration
+
+This project was 100% **vibecoded** using [Antigravity](https://deepmind.google/) & Google Gemini. From extracting and structuring official NUS PDF vacancy reports to enriching canonical faculty/grading data from the NUSMods API and crafting the real-time comparative Chart.js interface, the entire codebase was built interactively through agentic pair programming.
+
+---
+
+## 📄 License
+
+This project is licensed under the [MIT License](LICENSE) — feel free to use, modify, and distribute it for personal, academic, or open-source projects.
+
+---
+
 ## 📜 Disclaimer
-This project is an independent tool built for NUS students to make informed course registration decisions. All course data is parsed directly from NUS CourseReg Demand & Allocation Reports. Not affiliated with or endorsed by NUS.
+This project is an independent tool built for NUS students to make informed course registration decisions. All course data is parsed directly from official NUS CourseReg Demand & Allocation Reports. Not affiliated with or endorsed by the National University of Singapore (NUS).
 
