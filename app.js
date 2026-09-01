@@ -792,27 +792,110 @@ function populateClassesTable(curRound) {
   });
 }
 
-// Generate verbal & numerical YoY Insight
-function updateYoYInsight(course, semNum) {
+// Generate verbal & numerical YoY Insight with dynamic round detection and round selector pills
+function updateYoYInsight(course, semNum, targetRound) {
   if (!yoyInsightBox) return;
 
   const isSem2 = semNum === 2;
   const pastAyLabel = isSem2 ? 'AY24/25' : 'AY25/26';
   const currAyLabel = isSem2 ? 'AY25/26' : 'AY26/27';
 
-  const pastKey = isSem2 ? `2024/2025_S2_R1` : `2025/2026_S1_R1`;
-  const currKey = isSem2 ? `2025/2026_S2_R1` : `2026/2027_S1_R1`;
+  // Helper to check if a round has any activity across available academic years
+  const hasRoundActivity = (r) => {
+    const keys = [
+      `2026/2027_S${semNum}_R${r}`,
+      `2025/2026_S${semNum}_R${r}`,
+      `2024/2025_S${semNum}_R${r}`
+    ];
+    return keys.some(k => {
+      const h = course.history[k];
+      return h && (h.vacancy > 0 || h.demand > 0);
+    });
+  };
+
+  const r1Active = hasRoundActivity(1);
+  const r2Active = hasRoundActivity(2);
+  const r3Active = hasRoundActivity(3);
+
+  // Determine active round
+  let roundNum = targetRound;
+  if (!roundNum) {
+    let prefRound = 1;
+    if (currentPeriodKey) {
+      const m = currentPeriodKey.match(/_R(\d)/);
+      if (m) prefRound = parseInt(m[1], 10);
+    }
+    if (hasRoundActivity(prefRound)) {
+      roundNum = prefRound;
+    } else {
+      // Auto-fallback to the earliest round with actual activity
+      const firstActive = [1, 2, 3].find(r => hasRoundActivity(r));
+      roundNum = firstActive || prefRound;
+    }
+  }
+
+  // Generate round selector pills
+  const pillsHtml = `
+    <div class="yoy-round-pills">
+      <button type="button" class="round-pill-btn ${roundNum === 1 ? 'active' : ''} ${!r1Active ? 'pill-empty' : ''}" data-round="1" title="${r1Active ? 'View Round 1 stats' : 'Not offered in Round 1'}">Round 1${!r1Active ? ' (None)' : ''}</button>
+      <button type="button" class="round-pill-btn ${roundNum === 2 ? 'active' : ''} ${!r2Active ? 'pill-empty' : ''}" data-round="2" title="${r2Active ? 'View Round 2 stats' : 'Not offered in Round 2'}">Round 2${!r2Active ? ' (None)' : ''}</button>
+      <button type="button" class="round-pill-btn ${roundNum === 3 ? 'active' : ''} ${!r3Active ? 'pill-empty' : ''}" data-round="3" title="${r3Active ? 'View Round 3 stats' : 'Not offered in Round 3'}">Round 3${!r3Active ? ' (None)' : ''}</button>
+    </div>
+  `;
+
+  const attachPillListeners = () => {
+    const pills = yoyInsightBox.querySelectorAll('.round-pill-btn');
+    pills.forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const r = parseInt(btn.getAttribute('data-round'), 10);
+        updateYoYInsight(course, semNum, r);
+      });
+    });
+  };
+
+  // Case 1: No activity in this entire semester
+  if (!r1Active && !r2Active && !r3Active) {
+    yoyInsightBox.innerHTML = `
+      <div class="yoy-insight-header">
+        <div class="yoy-insight-title">
+          <span>ℹ️ Semester ${semNum} Status</span>
+        </div>
+        ${pillsHtml}
+      </div>
+      <div class="yoy-verdict">No registration records found for Semester ${semNum} across AY24/25, AY25/26, or AY26/27.</div>
+    `;
+    attachPillListeners();
+    return;
+  }
+
+  // Case 2: Selected round was not offered, but other rounds were
+  if (!hasRoundActivity(roundNum)) {
+    const activeRounds = [1, 2, 3].filter(r => hasRoundActivity(r));
+    const activeRoundsText = activeRounds.map(r => `Round ${r}`).join(' and ');
+    yoyInsightBox.innerHTML = `
+      <div class="yoy-insight-header">
+        <div class="yoy-insight-title">
+          <span>ℹ️ Round ${roundNum} Status (Semester ${semNum})</span>
+        </div>
+        ${pillsHtml}
+      </div>
+      <div class="yoy-verdict" style="color: #475569;">
+        <strong>Not offered in Round ${roundNum}:</strong> ${course.code} had 0 seats and 0 applications in Round ${roundNum}. This course is offered in <strong>${activeRoundsText}</strong>. Click the pills above to view active round statistics.
+      </div>
+    `;
+    attachPillListeners();
+    return;
+  }
+
+  // Keys for round comparison
+  const pastKey = isSem2 ? `2024/2025_S2_R${roundNum}` : `2025/2026_S1_R${roundNum}`;
+  const currKey = isSem2 ? `2025/2026_S2_R${roundNum}` : `2026/2027_S1_R${roundNum}`;
+  const baseKey = `2024/2025_S1_R${roundNum}`;
 
   const past = course.history[pastKey];
   const curr = course.history[currKey];
-
-  if (!curr && !past) {
-    yoyInsightBox.innerHTML = `
-      <div class="yoy-insight-title">ℹ️ Round 1 Status (Semester ${semNum})</div>
-      <div>No Round 1 registration activity recorded for Semester ${semNum}.</div>
-    `;
-    return;
-  }
+  const base = isSem2 ? null : course.history[baseKey];
 
   if (curr && !past) {
     const isOver = curr.vacancy === 0 ? curr.demand > 0 : curr.demand > curr.vacancy;
@@ -822,31 +905,43 @@ function updateYoYInsight(course, semNum) {
       : `${(curr.ratio * 100).toFixed(0)}% (${curr.ratio.toFixed(2)}x ${isOver ? '• +' + shortfall + ' Shortfall' : ''})`;
 
     yoyInsightBox.innerHTML = `
-      <div class="yoy-insight-title">💡 Round 1 Status (${currAyLabel} Sem ${semNum})</div>
+      <div class="yoy-insight-header">
+        <div class="yoy-insight-title">
+          <span>💡 Round ${roundNum} Status (${currAyLabel} Sem ${semNum})</span>
+        </div>
+        ${pillsHtml}
+      </div>
       <div class="yoy-insight-metrics">
         <div class="yoy-metric-item">Demand: <strong>${curr.demand} applications</strong></div>
         <div class="yoy-metric-item">Available Seats: <strong>${curr.vacancy}</strong></div>
         <div class="yoy-metric-item">Competition: <strong class="${isOver ? 'text-danger' : ''}">${compText}</strong></div>
       </div>
-      <div class="yoy-verdict">ℹ️ <strong>Newly Offered in Round 1:</strong> Not offered in Round 1 during ${pastAyLabel}. ${isOver ? `<strong>+${shortfall} students</strong> were unallocated due to quota limits.` : 'All applicants secured seats.'}</div>
+      <div class="yoy-verdict">ℹ️ <strong>Newly Offered in Round ${roundNum}:</strong> Not offered in Round ${roundNum} during ${pastAyLabel}. ${isOver ? `<strong>+${shortfall} students</strong> were unallocated due to quota limits.` : 'All applicants secured seats.'}</div>
     `;
+    attachPillListeners();
     return;
   }
 
   if (!curr && past) {
     yoyInsightBox.innerHTML = `
-      <div class="yoy-insight-title">📌 Past Round 1 Status (${pastAyLabel} Sem ${semNum})</div>
+      <div class="yoy-insight-header">
+        <div class="yoy-insight-title">
+          <span>📌 Past Round ${roundNum} Status (${pastAyLabel} Sem ${semNum})</span>
+        </div>
+        ${pillsHtml}
+      </div>
       <div class="yoy-insight-metrics">
         <div class="yoy-metric-item">Past Demand: <strong>${past.demand}</strong></div>
         <div class="yoy-metric-item">Past Seats: <strong>${past.vacancy}</strong></div>
         <div class="yoy-metric-item">Past Competition: <strong>${past.vacancy === 0 ? '0 Seats (+ ' + past.demand + ' Shortfall)' : past.ratio.toFixed(2) + 'x'}</strong></div>
       </div>
-      <div class="yoy-verdict"><em>No applications recorded for Round 1 in ${currAyLabel} yet.</em></div>
+      <div class="yoy-verdict"><em>No applications recorded for Round ${roundNum} in ${currAyLabel} yet.</em></div>
     `;
+    attachPillListeners();
     return;
   }
 
-  // Both exist!
+  // Both curr and past exist!
   const demDiff = curr.demand - past.demand;
   const demPct = past.demand > 0 ? ((demDiff / past.demand) * 100).toFixed(1) : (curr.demand > 0 ? '+100' : '0');
   const demSign = demDiff > 0 ? `+${demDiff}` : `${demDiff}`;
@@ -876,16 +971,26 @@ function updateYoYInsight(course, semNum) {
     }
   }
 
+  let baseMetricItem = '';
+  if (base && (base.demand > 0 || base.vacancy > 0)) {
+    baseMetricItem = `<div class="yoy-metric-item">AY24/25: <strong>${base.demand} Demand</strong> / ${base.vacancy} Seats (${base.vacancy === 0 ? '0 Seats' : base.ratio.toFixed(2) + 'x'})</div>`;
+  }
+
   yoyInsightBox.innerHTML = `
-    <div class="yoy-insight-title">
-      <span>💡 Round 1 Year-over-Year Insight (Semester ${semNum})</span>
+    <div class="yoy-insight-header">
+      <div class="yoy-insight-title">
+        <span>💡 Round ${roundNum} Year-over-Year Insight (Semester ${semNum})</span>
+      </div>
+      ${pillsHtml}
     </div>
     <div class="yoy-insight-metrics">
+      ${baseMetricItem}
       <div class="yoy-metric-item">${pastAyLabel}: <strong>${past.demand} Demand</strong> / ${past.vacancy} Seats (${past.vacancy === 0 ? '0 Seats' : past.ratio.toFixed(2) + 'x'})</div>
       <div class="yoy-metric-item">${currAyLabel}: <strong>${curr.demand} Demand</strong> / ${curr.vacancy} Seats (${curr.vacancy === 0 ? '0 Seats' : curr.ratio.toFixed(2) + 'x'})</div>
     </div>
     <div class="yoy-verdict">${trendVerdict}</div>
   `;
+  attachPillListeners();
 }
 
 // Render Comparison Chart with Chart.js
@@ -1041,6 +1146,12 @@ function renderHistoricalChart(course) {
         responsive: true,
         maintainAspectRatio: false,
         interaction: { mode: 'index', intersect: false },
+        onClick: (evt, elements) => {
+          if (elements && elements.length > 0) {
+            const clickedRound = elements[0].index + 1;
+            updateYoYInsight(course, semNum, clickedRound);
+          }
+        },
         plugins: {
           legend: {
             position: 'top',

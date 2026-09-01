@@ -800,6 +800,52 @@ select:focus {
   color: #334155;
 }
 
+.yoy-insight-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.yoy-round-pills {
+  display: inline-flex;
+  background: #e2e8f0;
+  padding: 2px;
+  border-radius: var(--radius-sm);
+  gap: 2px;
+}
+
+.round-pill-btn {
+  background: transparent;
+  border: none;
+  font-size: 0.73rem;
+  font-family: inherit;
+  font-weight: 600;
+  color: var(--text-muted);
+  padding: 0.2rem 0.55rem;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.round-pill-btn:hover {
+  color: var(--text-main);
+}
+
+.round-pill-btn.active {
+  background: #ffffff;
+  color: var(--primary);
+  font-weight: 700;
+  box-shadow: var(--shadow-sm);
+}
+
+.round-pill-btn.pill-empty {
+  color: #94a3b8;
+  opacity: 0.75;
+}
+
 .section-title-row {
   margin-bottom: 1rem;
 }
