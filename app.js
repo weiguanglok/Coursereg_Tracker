@@ -796,8 +796,12 @@ function populateClassesTable(curRound) {
 function updateYoYInsight(course, semNum) {
   if (!yoyInsightBox) return;
 
-  const pastKey = `2025/2026_S${semNum}_R1`;
-  const currKey = `2026/2027_S${semNum}_R1`;
+  const isSem2 = semNum === 2;
+  const pastAyLabel = isSem2 ? 'AY24/25' : 'AY25/26';
+  const currAyLabel = isSem2 ? 'AY25/26' : 'AY26/27';
+
+  const pastKey = isSem2 ? `2024/2025_S2_R1` : `2025/2026_S1_R1`;
+  const currKey = isSem2 ? `2025/2026_S2_R1` : `2026/2027_S1_R1`;
 
   const past = course.history[pastKey];
   const curr = course.history[currKey];
@@ -818,26 +822,26 @@ function updateYoYInsight(course, semNum) {
       : `${(curr.ratio * 100).toFixed(0)}% (${curr.ratio.toFixed(2)}x ${isOver ? '• +' + shortfall + ' Shortfall' : ''})`;
 
     yoyInsightBox.innerHTML = `
-      <div class="yoy-insight-title">💡 Round 1 Status (AY26/27 Sem ${semNum})</div>
+      <div class="yoy-insight-title">💡 Round 1 Status (${currAyLabel} Sem ${semNum})</div>
       <div class="yoy-insight-metrics">
         <div class="yoy-metric-item">Demand: <strong>${curr.demand} applications</strong></div>
         <div class="yoy-metric-item">Available Seats: <strong>${curr.vacancy}</strong></div>
         <div class="yoy-metric-item">Competition: <strong class="${isOver ? 'text-danger' : ''}">${compText}</strong></div>
       </div>
-      <div class="yoy-verdict">ℹ️ <strong>Newly Offered in Round 1:</strong> Not offered in Round 1 during AY25/26. ${isOver ? `<strong>+${shortfall} students</strong> were unallocated due to quota limits.` : 'All applicants secured seats.'}</div>
+      <div class="yoy-verdict">ℹ️ <strong>Newly Offered in Round 1:</strong> Not offered in Round 1 during ${pastAyLabel}. ${isOver ? `<strong>+${shortfall} students</strong> were unallocated due to quota limits.` : 'All applicants secured seats.'}</div>
     `;
     return;
   }
 
   if (!curr && past) {
     yoyInsightBox.innerHTML = `
-      <div class="yoy-insight-title">📌 Past Round 1 Status (AY25/26 Sem ${semNum})</div>
+      <div class="yoy-insight-title">📌 Past Round 1 Status (${pastAyLabel} Sem ${semNum})</div>
       <div class="yoy-insight-metrics">
         <div class="yoy-metric-item">Past Demand: <strong>${past.demand}</strong></div>
         <div class="yoy-metric-item">Past Seats: <strong>${past.vacancy}</strong></div>
         <div class="yoy-metric-item">Past Competition: <strong>${past.vacancy === 0 ? '0 Seats (+ ' + past.demand + ' Shortfall)' : past.ratio.toFixed(2) + 'x'}</strong></div>
       </div>
-      <div class="yoy-verdict"><em>No applications recorded for Round 1 in AY26/27 yet.</em></div>
+      <div class="yoy-verdict"><em>No applications recorded for Round 1 in ${currAyLabel} yet.</em></div>
     `;
     return;
   }
@@ -864,11 +868,11 @@ function updateYoYInsight(course, semNum) {
   } else {
     const ratioDiff = curr.ratio - past.ratio;
     if (curr.ratio > past.ratio + 0.1) {
-      trendVerdict = `⚠️ <strong>Higher Competition:</strong> Competition rose by <strong>+${ratioDiff.toFixed(2)}x</strong> over last year (+${currShortfall} shortfall vs ${pastShortfall > 0 ? '+' + pastShortfall : '0'}). Demand changed by <strong>${demSign} (${demPct}%)</strong> vs seats <strong>${vacSign} (${vacPct}%)</strong>.`;
+      trendVerdict = `⚠️ <strong>Higher Competition:</strong> Competition rose by <strong>+${ratioDiff.toFixed(2)}x</strong> over ${pastAyLabel} (+${currShortfall} shortfall vs ${pastShortfall > 0 ? '+' + pastShortfall : '0'}). Demand changed by <strong>${demSign} (${demPct}%)</strong> vs seats <strong>${vacSign} (${vacPct}%)</strong>.`;
     } else if (curr.ratio < past.ratio - 0.1) {
-      trendVerdict = `📉 <strong>Easier to Secure:</strong> Competition dropped by <strong>${Math.abs(ratioDiff).toFixed(2)}x</strong> compared to last year. Available seats changed by <strong>${vacSign} (${vacPct}%)</strong> while demand shifted by <strong>${demSign} (${demPct}%)</strong>.`;
+      trendVerdict = `📉 <strong>Easier to Secure:</strong> Competition dropped by <strong>${Math.abs(ratioDiff).toFixed(2)}x</strong> compared to ${pastAyLabel}. Available seats changed by <strong>${vacSign} (${vacPct}%)</strong> while demand shifted by <strong>${demSign} (${demPct}%)</strong>.`;
     } else {
-      trendVerdict = `⚖️ <strong>Stable Competition:</strong> Competition remained very close to last year (${curr.ratio.toFixed(2)}x vs ${past.ratio.toFixed(2)}x).`;
+      trendVerdict = `⚖️ <strong>Stable Competition:</strong> Competition remained very close to ${pastAyLabel} (${curr.ratio.toFixed(2)}x vs ${past.ratio.toFixed(2)}x).`;
     }
   }
 
@@ -877,8 +881,8 @@ function updateYoYInsight(course, semNum) {
       <span>💡 Round 1 Year-over-Year Insight (Semester ${semNum})</span>
     </div>
     <div class="yoy-insight-metrics">
-      <div class="yoy-metric-item">Past Year (AY25/26): <strong>${past.demand} Demand</strong> / ${past.vacancy} Seats (${past.vacancy === 0 ? '0 Seats' : past.ratio.toFixed(2) + 'x'})</div>
-      <div class="yoy-metric-item">Current Year (AY26/27): <strong>${curr.demand} Demand</strong> / ${curr.vacancy} Seats (${curr.vacancy === 0 ? '0 Seats' : curr.ratio.toFixed(2) + 'x'})</div>
+      <div class="yoy-metric-item">${pastAyLabel}: <strong>${past.demand} Demand</strong> / ${past.vacancy} Seats (${past.vacancy === 0 ? '0 Seats' : past.ratio.toFixed(2) + 'x'})</div>
+      <div class="yoy-metric-item">${currAyLabel}: <strong>${curr.demand} Demand</strong> / ${curr.vacancy} Seats (${curr.vacancy === 0 ? '0 Seats' : curr.ratio.toFixed(2) + 'x'})</div>
     </div>
     <div class="yoy-verdict">${trendVerdict}</div>
   `;
@@ -896,70 +900,142 @@ function renderHistoricalChart(course) {
   if (currentChartMode === 's1' || currentChartMode === 's2') {
     const semNum = currentChartMode === 's2' ? 2 : 1;
 
-    if (chartSectionTitle) chartSectionTitle.textContent = `Semester ${semNum} Year-over-Year Comparison`;
+    if (chartSectionTitle) chartSectionTitle.textContent = `Semester ${semNum} Multi-Year Comparison`;
     if (chartSectionSub) {
-      chartSectionSub.textContent = course.sem_offered === 'both'
-        ? `Comparing Demand (Applications) vs Vacancy (Seats) between AY25/26 Sem ${semNum} and AY26/27 Sem ${semNum}`
-        : `Comparing AY25/26 vs AY26/27 (Sem ${semNum === 1 ? 2 : 1} hidden as module is not offered in that semester)`;
+      chartSectionSub.textContent = semNum === 1
+        ? `Comparing Demand (Applications) vs Vacancy (Seats) across AY24/25, AY25/26, and AY26/27 for Semester 1`
+        : `Comparing Demand (Applications) vs Vacancy (Seats) between AY24/25 and AY25/26 for Semester 2`;
     }
 
     // Update the insight summary box
     updateYoYInsight(course, semNum);
 
     const labels = ['Round 1', 'Round 2', 'Round 3'];
-    const pastDem = [];
-    const pastVac = [];
-    const currDem = [];
-    const currVac = [];
+    let datasets = [];
 
-    [1, 2, 3].forEach(r => {
-      const pastH = course.history[`2025/2026_S${semNum}_R${r}`];
-      const currH = course.history[`2026/2027_S${semNum}_R${r}`];
+    if (semNum === 1) {
+      const y24Dem = [], y24Vac = [];
+      const y25Dem = [], y25Vac = [];
+      const y26Dem = [], y26Vac = [];
 
-      pastDem.push(pastH ? pastH.demand : 0);
-      pastVac.push(pastH ? pastH.vacancy : 0);
-      currDem.push(currH ? currH.demand : 0);
-      currVac.push(currH ? currH.vacancy : 0);
-    });
+      [1, 2, 3].forEach(r => {
+        const h24 = course.history[`2024/2025_S1_R${r}`];
+        const h25 = course.history[`2025/2026_S1_R${r}`];
+        const h26 = course.history[`2026/2027_S1_R${r}`];
+
+        y24Dem.push(h24 ? h24.demand : 0);
+        y24Vac.push(h24 ? h24.vacancy : 0);
+        y25Dem.push(h25 ? h25.demand : 0);
+        y25Vac.push(h25 ? h25.vacancy : 0);
+        y26Dem.push(h26 ? h26.demand : 0);
+        y26Vac.push(h26 ? h26.vacancy : 0);
+      });
+
+      datasets = [
+        {
+          label: 'AY24/25 S1 Demand',
+          data: y24Dem,
+          backgroundColor: 'rgba(251, 191, 36, 0.85)',
+          borderColor: '#f59e0b',
+          borderWidth: 1,
+          borderRadius: 4
+        },
+        {
+          label: 'AY24/25 S1 Vacancy',
+          data: y24Vac,
+          backgroundColor: 'rgba(203, 213, 225, 0.85)',
+          borderColor: '#94a3b8',
+          borderWidth: 1,
+          borderRadius: 4
+        },
+        {
+          label: 'AY25/26 S1 Demand',
+          data: y25Dem,
+          backgroundColor: 'rgba(245, 158, 11, 0.85)',
+          borderColor: '#d97706',
+          borderWidth: 1,
+          borderRadius: 4
+        },
+        {
+          label: 'AY25/26 S1 Vacancy',
+          data: y25Vac,
+          backgroundColor: 'rgba(148, 163, 184, 0.85)',
+          borderColor: '#64748b',
+          borderWidth: 1,
+          borderRadius: 4
+        },
+        {
+          label: 'AY26/27 S1 Demand',
+          data: y26Dem,
+          backgroundColor: 'rgba(239, 124, 0, 0.95)',
+          borderColor: '#c2410c',
+          borderWidth: 1,
+          borderRadius: 4
+        },
+        {
+          label: 'AY26/27 S1 Vacancy',
+          data: y26Vac,
+          backgroundColor: 'rgba(0, 61, 124, 0.95)',
+          borderColor: '#002752',
+          borderWidth: 1,
+          borderRadius: 4
+        }
+      ];
+    } else {
+      const y24Dem = [], y24Vac = [];
+      const y25Dem = [], y25Vac = [];
+
+      [1, 2, 3].forEach(r => {
+        const h24 = course.history[`2024/2025_S2_R${r}`];
+        const h25 = course.history[`2025/2026_S2_R${r}`];
+
+        y24Dem.push(h24 ? h24.demand : 0);
+        y24Vac.push(h24 ? h24.vacancy : 0);
+        y25Dem.push(h25 ? h25.demand : 0);
+        y25Vac.push(h25 ? h25.vacancy : 0);
+      });
+
+      datasets = [
+        {
+          label: 'AY24/25 S2 Demand',
+          data: y24Dem,
+          backgroundColor: 'rgba(245, 158, 11, 0.85)',
+          borderColor: '#d97706',
+          borderWidth: 1,
+          borderRadius: 4
+        },
+        {
+          label: 'AY24/25 S2 Vacancy',
+          data: y24Vac,
+          backgroundColor: 'rgba(148, 163, 184, 0.85)',
+          borderColor: '#64748b',
+          borderWidth: 1,
+          borderRadius: 4
+        },
+        {
+          label: 'AY25/26 S2 Demand',
+          data: y25Dem,
+          backgroundColor: 'rgba(239, 124, 0, 0.95)',
+          borderColor: '#c2410c',
+          borderWidth: 1,
+          borderRadius: 4
+        },
+        {
+          label: 'AY25/26 S2 Vacancy',
+          data: y25Vac,
+          backgroundColor: 'rgba(0, 61, 124, 0.95)',
+          borderColor: '#002752',
+          borderWidth: 1,
+          borderRadius: 4
+        }
+      ];
+    }
 
     activeChart = new Chart(ctx, {
       type: 'bar',
       data: {
         labels: labels,
-        datasets: [
-          {
-            label: `AY25/26 S${semNum} Demand`,
-            data: pastDem,
-            backgroundColor: 'rgba(245, 158, 11, 0.85)',
-            borderColor: '#d97706',
-            borderWidth: 1,
-            borderRadius: 4
-          },
-          {
-            label: `AY25/26 S${semNum} Vacancy`,
-            data: pastVac,
-            backgroundColor: 'rgba(148, 163, 184, 0.75)',
-            borderColor: '#64748b',
-            borderWidth: 1,
-            borderRadius: 4
-          },
-          {
-            label: `AY26/27 S${semNum} Demand`,
-            data: currDem,
-            backgroundColor: 'rgba(239, 124, 0, 0.95)',
-            borderColor: '#c2410c',
-            borderWidth: 1,
-            borderRadius: 4
-          },
-          {
-            label: `AY26/27 S${semNum} Vacancy`,
-            data: currVac,
-            backgroundColor: 'rgba(0, 61, 124, 0.95)',
-            borderColor: '#002752',
-            borderWidth: 1,
-            borderRadius: 4
-          }
-        ]
+        datasets: datasets
       },
       options: {
         responsive: true,

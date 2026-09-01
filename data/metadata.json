@@ -1,6 +1,48 @@
 {
-  "total_courses": 2829,
+  "total_courses": 3600,
   "periods": [
+    {
+      "ay": "2024/2025",
+      "semester": 1,
+      "round": 1,
+      "key": "2024/2025_S1_R1",
+      "label": "2024/2025 Sem 1 (Round 1)"
+    },
+    {
+      "ay": "2024/2025",
+      "semester": 1,
+      "round": 2,
+      "key": "2024/2025_S1_R2",
+      "label": "2024/2025 Sem 1 (Round 2)"
+    },
+    {
+      "ay": "2024/2025",
+      "semester": 1,
+      "round": 3,
+      "key": "2024/2025_S1_R3",
+      "label": "2024/2025 Sem 1 (Round 3)"
+    },
+    {
+      "ay": "2024/2025",
+      "semester": 2,
+      "round": 1,
+      "key": "2024/2025_S2_R1",
+      "label": "2024/2025 Sem 2 (Round 1)"
+    },
+    {
+      "ay": "2024/2025",
+      "semester": 2,
+      "round": 2,
+      "key": "2024/2025_S2_R2",
+      "label": "2024/2025 Sem 2 (Round 2)"
+    },
+    {
+      "ay": "2024/2025",
+      "semester": 2,
+      "round": 3,
+      "key": "2024/2025_S2_R3",
+      "label": "2024/2025 Sem 2 (Round 3)"
+    },
     {
       "ay": "2025/2026",
       "semester": 1,
@@ -86,6 +128,7 @@
     "School of Computing",
     "Science",
     "YST Conservatory of Music",
+    "Yale-NUS College",
     "Yong Loo Lin Sch of Medicine"
   ],
   "departments": [
@@ -164,9 +207,10 @@
     "Statistics and Data Science",
     "Strategy and Policy",
     "Tembusu College",
-    "YSTCM Dean's Office"
+    "YSTCM Dean's Office",
+    "Yale-NUS College"
   ],
-  "last_updated": "2026-09-01 21:50:46",
-  "su_count": 857,
-  "cscu_count": 61
+  "last_updated": "2026-09-01 23:57:41",
+  "su_count": 993,
+  "cscu_count": 72
 }
