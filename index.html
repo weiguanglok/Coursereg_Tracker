@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NUS CourseReg Demand & Vacancy Tracker</title>
+  <meta name="description" content="Search and analyze NUS CourseReg course vacancies, demand, oversubscription ratios, and past-year historical comparisons." />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css" />
+  <!-- Chart.js for comparative historical visualizations -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <div class="app-container">
+    <!-- Navigation / Header -->
+    <header class="navbar">
+      <div class="brand">
+        <div class="brand-badge">NUS</div>
+        <div class="brand-info">
+          <h1>CourseReg Tracker</h1>
+          <span class="subtitle">Vacancy & Demand Intelligence • Past Year Comparison</span>
+        </div>
+      </div>
+      <div class="header-meta">
+        <span class="badge badge-pill" id="dataset-badge">Loading data...</span>
+        <a href="https://github.com" target="_blank" id="gh-link" class="icon-link" title="GitHub Repository">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path></svg>
+        </a>
+      </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="main-layout">
+      <!-- Search & Hero Filter Area -->
+      <section class="search-hero">
+        <div class="search-input-wrapper">
+          <svg class="search-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+          <input 
+            type="text" 
+            id="search-input" 
+            placeholder="Search by Course Code or Title (e.g. CS2040, AR2228, GEA1000)..." 
+            autocomplete="off" 
+            autofocus 
+          />
+          <button id="clear-search-btn" class="clear-btn" style="display:none;" title="Clear search">&times;</button>
+          <span class="search-shortcut-hint">Press <kbd>/</kbd> to search</span>
+        </div>
+
+        <!-- Filter Controls Bar -->
+        <div class="filters-bar">
+          <div class="filter-group">
+            <label for="period-select">Current Round View:</label>
+            <select id="period-select">
+              <option value="" disabled selected>Loading rounds...</option>
+            </select>
+          </div>
+
+          <div class="filter-group">
+            <label for="faculty-select">Faculty / School:</label>
+            <select id="faculty-select">
+              <option value="ALL">All Faculties</option>
+            </select>
+          </div>
+
+          <div class="filter-group">
+            <label for="sort-select">Sort By:</label>
+            <select id="sort-select">
+              <option value="ratio_desc">Oversubscription Ratio (Highest first)</option>
+              <option value="demand_desc">Total Demand (Highest first)</option>
+              <option value="diff_desc">Quota Shortfall / Deficit (Highest)</option>
+              <option value="vacancy_desc">Total Vacancy (Highest first)</option>
+              <option value="code_asc">Course Code (A - Z)</option>
+            </select>
+          </div>
+
+          <div class="filter-toggle">
+            <label class="switch-label">
+              <input type="checkbox" id="oversubscribed-toggle" />
+              <span class="toggle-track"></span>
+              <span class="toggle-text">Oversubscribed Only (&gt;100%)</span>
+            </label>
+          </div>
+        </div>
+      </section>
+
+      <!-- Quick Metrics Summary Dashboard -->
+      <section class="stats-overview" id="stats-overview">
+        <div class="stat-card">
+          <span class="stat-label">Total Courses Offered</span>
+          <span class="stat-val" id="stat-total-courses">-</span>
+          <span class="stat-sub" id="stat-period-name">In Selected Round</span>
+        </div>
+        <div class="stat-card stat-alert">
+          <span class="stat-label">Oversubscribed Courses</span>
+          <span class="stat-val" id="stat-oversubscribed-count">-</span>
+          <span class="stat-sub" id="stat-oversubscribed-pct">- % of round</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-label">Total Demand</span>
+          <span class="stat-val" id="stat-total-demand">-</span>
+          <span class="stat-sub" id="stat-total-vacancy">vs - Vacancies</span>
+        </div>
+        <div class="stat-card stat-highlight">
+          <span class="stat-label">Most In-Demand Course</span>
+          <span class="stat-val stat-val-sm" id="stat-most-popular">-</span>
+          <span class="stat-sub" id="stat-most-popular-ratio">-</span>
+        </div>
+      </section>
+
+      <!-- Results Header -->
+      <div class="results-header">
+        <h2 id="results-count">Showing courses...</h2>
+        <div class="legend">
+          <span class="legend-item"><span class="dot dot-danger"></span> Oversubscribed (&gt;100%)</span>
+          <span class="legend-item"><span class="dot dot-warning"></span> High Demand (80-100%)</span>
+          <span class="legend-item"><span class="dot dot-success"></span> Vacancy Available (&lt;80%)</span>
+        </div>
+      </div>
+
+      <!-- Courses Grid / List -->
+      <div class="courses-grid" id="courses-grid">
+        <div class="loading-spinner">Loading course database...</div>
+      </div>
+
+      <!-- Pagination -->
+      <div class="pagination-bar" id="pagination-bar" style="display: none;">
+        <button id="prev-page-btn" class="btn btn-secondary">&larr; Previous</button>
+        <span id="page-indicator">Page 1 of 1</span>
+        <button id="next-page-btn" class="btn btn-secondary">Next &rarr;</button>
+      </div>
+    </main>
+
+    <!-- Detailed Course & Past-Year Comparison Modal -->
+    <div class="modal-backdrop" id="course-modal" style="display: none;">
+      <div class="modal-dialog">
+        <div class="modal-header">
+          <div class="modal-title-group">
+            <div class="modal-tags">
+              <span class="badge" id="modal-faculty">Faculty</span>
+              <span class="badge badge-outline" id="modal-dept">Department</span>
+            </div>
+            <h2 id="modal-code">CS2040C</h2>
+            <h3 id="modal-title">Data Structures and Algorithms</h3>
+          </div>
+          <button class="modal-close-btn" id="modal-close-btn" title="Close modal">&times;</button>
+        </div>
+
+        <div class="modal-body">
+          <!-- Quick Status Cards for the Selected Round -->
+          <div class="modal-stat-row">
+            <div class="modal-stat-box">
+              <span class="ms-label">Vacancy</span>
+              <span class="ms-val" id="ms-vacancy">-</span>
+            </div>
+            <div class="modal-stat-box">
+              <span class="ms-label">Demand</span>
+              <span class="ms-val" id="ms-demand">-</span>
+            </div>
+            <div class="modal-stat-box">
+              <span class="ms-label">Competition Ratio</span>
+              <span class="ms-val" id="ms-ratio">-</span>
+            </div>
+            <div class="modal-stat-box">
+              <span class="ms-label">Quota Exceeded</span>
+              <span class="ms-val text-danger" id="ms-quota-exceeded">-</span>
+            </div>
+          </div>
+
+          <!-- Historical Comparison Chart Section -->
+          <div class="comparison-section">
+            <div class="section-title-row">
+              <h4>Year-over-Year & Round Comparison</h4>
+              <span class="section-subtitle">Compare Vacancy vs Demand across past year (AY25/26) and current year (AY26/27)</span>
+            </div>
+            <div class="chart-container">
+              <canvas id="historicalChart"></canvas>
+            </div>
+          </div>
+
+          <!-- Historical Data Table -->
+          <div class="history-table-section">
+            <h4>Historical Rounds Summary</h4>
+            <div class="table-responsive">
+              <table class="data-table" id="history-summary-table">
+                <thead>
+                  <tr>
+                    <th>Academic Period</th>
+                    <th>Round</th>
+                    <th>Vacancy</th>
+                    <th>Demand</th>
+                    <th>Ratio</th>
+                    <th>Allocated (Main)</th>
+                    <th>Quota Exceeded</th>
+                    <th>Clashes / Others</th>
+                  </tr>
+                </thead>
+                <tbody id="history-table-body">
+                  <!-- Dynamic rows -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Class-Level Breakdown for Current Selected Round -->
+          <div class="classes-breakdown-section">
+            <div class="section-title-row">
+              <h4>Class Breakdown (<span id="class-breakdown-round-name">Current Round</span>)</h4>
+              <span class="section-subtitle">Detailed allocation statistics per lecture/tutorial class</span>
+            </div>
+            <div class="table-responsive">
+              <table class="data-table" id="classes-table">
+                <thead>
+                  <tr>
+                    <th>Class</th>
+                    <th>Vacancy</th>
+                    <th>Demand</th>
+                    <th>Ratio</th>
+                    <th>Main Alloc</th>
+                    <th>Reserve Alloc</th>
+                    <th>Quota Exceeded</th>
+                    <th>Timetable Clash</th>
+                    <th>Workload / Others</th>
+                  </tr>
+                </thead>
+                <tbody id="classes-table-body">
+                  <!-- Dynamic rows -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="modal-footer-actions">
+            <a id="nusmods-link" href="#" target="_blank" class="btn btn-secondary">
+              View on NUSMods &nearr;
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+      <p>NUS CourseReg Tracker &bull; Data extracted from official NUS CourseReg Demand & Allocation Reports.</p>
+      <p class="disclaimer">Built for students to make informed course registration decisions. All trademarks belong to NUS.</p>
+    </footer>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
+

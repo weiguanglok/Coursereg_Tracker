@@ -1,0 +1,95 @@
+# NUS CourseReg Vacancy & Demand Tracker 📊
+
+An interactive, responsive web application for NUS students to search course demand and vacancies, see oversubscription ratios, and analyze historical registration trends across CourseReg rounds and past academic years.
+
+Designed to be hosted directly on **GitHub Pages** with zero backend infrastructure.
+
+![Screenshot / Demo Preview](https://raw.githubusercontent.com/nusmodifications/nusmods/master/packages/nusmods/src/assets/img/hero.png)
+
+---
+
+## 🌟 Key Features
+
+- 🔍 **Instant Search & Autocomplete**: Search by module/course code (e.g., `CS2040C`, `AR2228`, `GEA1000`) or title.
+- 📈 **Oversubscription Intelligence**: Instantly identify modules where `Demand > Vacancy`, with calculated competition ratios (e.g. `2.45x Oversubscribed`) and quota deficit metrics.
+- 📅 **Year-over-Year Historical Comparison**:
+  - Compare current round statistics with the **exact same round from the previous academic year** (e.g. AY26/27 Sem 1 Round 1 vs AY25/26 Sem 1 Round 1).
+  - Visual side-by-side comparative charts powered by Chart.js.
+- 🏫 **Class-Level Granularity**: View individual lecture and tutorial classes (D1, L1, etc.), showing actual quotas, timetable clashes, and workload limit rejections.
+- 🎯 **Advanced Filtering**: Filter by Faculty/School, round view, and "Only Oversubscribed" courses.
+- ⚡ **100% Static & Lightweight**: Pre-indexed client-side JSON database loads in milliseconds without any server or database required.
+
+---
+
+## 📁 Project Structure
+
+```
+nus-coursereg-tracker/
+├── index.html                   # Main web application UI
+├── style.css                    # Modern, responsive styling
+├── app.js                       # Search, filtering, and Chart.js integration
+├── parse_reports.py             # Python script to parse PDF vacancy reports into JSON
+├── data/
+│   ├── coursereg_data.json      # Indexed course database (generated)
+│   └── metadata.json            # Available rounds, faculties, and summary
+├── .github/workflows/
+│   └── deploy.yml               # GitHub Actions for automated GitHub Pages deployment
+└── README.md
+```
+
+---
+
+## 🚀 How to Deploy to GitHub Pages
+
+You can publish this project to GitHub Pages in under 2 minutes:
+
+### Option A: Standard GitHub Pages Deployment (Recommended)
+1. Initialize a git repository in this folder (if not already done):
+   ```bash
+   git init
+   git add .
+   git commit -m "Initial commit of NUS CourseReg Tracker"
+   ```
+2. Create a new public repository on GitHub (e.g. `nus-coursereg-tracker`).
+3. Link and push your repository:
+   ```bash
+   git remote add origin https://github.com/<YOUR_USERNAME>/nus-coursereg-tracker.git
+   git branch -M main
+   git push -u origin main
+   ```
+4. On your GitHub repository page:
+   - Go to **Settings** &rarr; **Pages** (in the left sidebar).
+   - Under **Build and deployment** &gt; **Source**, select **Deploy from a branch**.
+   - Select branch: `main` and folder: `/ (root)`.
+   - Click **Save**.
+5. Your site will be live at: `https://<YOUR_USERNAME>.github.io/nus-coursereg-tracker/` !
+
+---
+
+## 🔄 Adding New CourseReg PDF Reports in the Future
+
+When NUS releases new CourseReg round vacancy reports:
+
+1. Place the new PDF into your reports folder (e.g. `2627s2round_1.pdf`).
+2. Run the parser script:
+   ```bash
+   python parse_reports.py
+   ```
+3. Commit and push the updated `data/coursereg_data.json` and `data/metadata.json` to GitHub. The live site will automatically update!
+
+---
+
+## 💻 Running Locally
+
+To test locally without an internet connection:
+```bash
+# In this directory:
+python -m http.server 8000
+```
+Open [http://localhost:8000](http://localhost:8000) in your browser.
+
+---
+
+## 📜 Disclaimer
+This project is an independent tool built for NUS students to make informed course registration decisions. All course data is parsed directly from NUS CourseReg Demand & Allocation Reports. Not affiliated with or endorsed by NUS.
+
