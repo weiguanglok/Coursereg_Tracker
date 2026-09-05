@@ -265,8 +265,18 @@ def build_database(pdf_folder, output_dir):
     print(f"Saved metadata to {meta_output}")
 
 if __name__ == "__main__":
-    PDF_FOLDER = r"C:\Users\stamp\Downloads\Course Vacancy Reports"
-    OUTPUT_DIR = r"C:\Users\stamp\.gemini\antigravity\scratch\nus-coursereg-tracker\data"
+    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+    OUTPUT_DIR = os.path.join(BASE_DIR, "data")
+
+    # Look for PDF reports: in ./reports, or dynamically in the current user's Downloads
+    PDF_FOLDER = os.path.join(BASE_DIR, "reports")
+    if not os.path.exists(PDF_FOLDER):
+        user_downloads = os.path.join(os.path.expanduser("~"), "Downloads", "Course Vacancy Reports")
+        if os.path.exists(user_downloads):
+            PDF_FOLDER = user_downloads
+        else:
+            PDF_FOLDER = BASE_DIR
+
     build_database(PDF_FOLDER, OUTPUT_DIR)
     print("\n--- Running NUSMods API Canonical Enrichment ---")
     try:

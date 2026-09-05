@@ -3,7 +3,8 @@ import json
 import os
 import time
 
-DATA_DIR = r"C:\Users\stamp\.gemini\antigravity\scratch\nus-coursereg-tracker\data"
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+DATA_DIR = os.path.join(BASE_DIR, "data")
 data_path = os.path.join(DATA_DIR, "coursereg_data.json")
 meta_path = os.path.join(DATA_DIR, "metadata.json")
 
