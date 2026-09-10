@@ -26,6 +26,13 @@ const prevPageBtn = document.getElementById('prev-page-btn');
 const nextPageBtn = document.getElementById('next-page-btn');
 const pageIndicator = document.getElementById('page-indicator');
 
+// Dynamic Round Context Banner Elements
+const roundContextBanner = document.getElementById('round-context-banner');
+const roundBannerIcon = document.getElementById('round-banner-icon');
+const roundBannerTitle = document.getElementById('round-banner-title');
+const roundBannerBadge = document.getElementById('round-banner-badge');
+const roundBannerDesc = document.getElementById('round-banner-desc');
+
 // Modal Elements
 const courseModal = document.getElementById('course-modal');
 const modalCloseBtn = document.getElementById('modal-close-btn');
@@ -42,6 +49,11 @@ const msVacancy = document.getElementById('ms-vacancy');
 const msDemand = document.getElementById('ms-demand');
 const msRatio = document.getElementById('ms-ratio');
 const msQuotaExceeded = document.getElementById('ms-quota-exceeded');
+const statBoxQuota = document.getElementById('stat-box-quota');
+const quotaInfoBtn = document.getElementById('quota-info-btn');
+const modalRoundAlert = document.getElementById('modal-round-alert');
+const tieBreakerPanel = document.getElementById('tie-breaker-panel');
+const tbpCloseBtn = document.getElementById('tbp-close-btn');
 const historyTableBody = document.getElementById('history-table-body');
 const classesTableBody = document.getElementById('classes-table-body');
 const classBreakdownRoundName = document.getElementById('class-breakdown-round-name');
@@ -126,6 +138,53 @@ function setupSelectors() {
   // Header badge
   const numCourses = Object.keys(coursesData).length;
   datasetBadge.textContent = `${numCourses.toLocaleString()} Courses Indexed`;
+
+  // Update dynamic round context guidance
+  updateRoundContextBanner(currentPeriodKey);
+}
+
+// Dynamic Round Context Guidance Banner
+function updateRoundContextBanner(periodKey) {
+  if (!roundContextBanner) return;
+
+  const currentPeriodMeta = (metadata.periods || []).find(p => p.key === periodKey);
+  const roundNum = currentPeriodMeta ? currentPeriodMeta.round : (periodKey.includes('_R2') ? 2 : (periodKey.includes('_R3') ? 3 : 1));
+  const semNum = currentPeriodMeta ? currentPeriodMeta.semester : (periodKey.includes('_S2_') ? 2 : 1);
+  const ayStr = currentPeriodMeta ? currentPeriodMeta.ay : '';
+
+  roundContextBanner.className = 'round-context-banner';
+
+  if (roundNum === 1) {
+    roundContextBanner.classList.add('banner-r1');
+    if (roundBannerIcon) roundBannerIcon.textContent = '🔒';
+    if (roundBannerTitle) roundBannerTitle.textContent = `Round 1: Protected Major Priority (${ayStr} Sem ${semNum})`;
+    if (roundBannerBadge) roundBannerBadge.textContent = 'Protected Major Priority';
+    if (roundBannerDesc) {
+      roundBannerDesc.innerHTML = `
+        <strong>Protected Round:</strong> Quotas in this round are strictly reserved for Major and Department graduation requirements. Ratios shown here reflect only declared majors. <strong>Warning for UE / Minor seekers:</strong> Competition may appear deceptively low now — demand spikes heavily in Round 2 when Unrestricted Electives (UE) open up!
+      `;
+    }
+  } else if (roundNum === 2) {
+    roundContextBanner.classList.add('banner-r2');
+    if (roundBannerIcon) roundBannerIcon.textContent = '🌐';
+    if (roundBannerTitle) roundBannerTitle.textContent = `Round 2: Minors, Second Majors & UEs Open (${ayStr} Sem ${semNum})`;
+    if (roundBannerBadge) roundBannerBadge.textContent = 'UE & Cross-Faculty Open';
+    if (roundBannerDesc) {
+      roundBannerDesc.innerHTML = `
+        <strong>Open Elective Round:</strong> Second Majors, Minors, and Unrestricted Elective (UE) applications are unlocked across all faculties. This is the peak competition round for popular General Education (GE) and high-demand introductory modules.
+      `;
+    }
+  } else {
+    roundContextBanner.classList.add('banner-r3');
+    if (roundBannerIcon) roundBannerIcon.textContent = '⚡';
+    if (roundBannerTitle) roundBannerTitle.textContent = `Round 3: Final Vacancies, Appeals & Overloading (${ayStr} Sem ${semNum})`;
+    if (roundBannerBadge) roundBannerBadge.textContent = 'Final Allocation Round';
+    if (roundBannerDesc) {
+      roundBannerDesc.innerHTML = `
+        <strong>Final Registration Round:</strong> All students can snap up leftover vacancies, drop unwanted modules, and submit workload overload waiver appeals. Remaining capacity is tightly constrained for popular modules.
+      `;
+    }
+  }
 }
 
 // Setup Event Listeners
@@ -153,6 +212,7 @@ function setupEventListeners() {
 
   periodSelect.addEventListener('change', (e) => {
     currentPeriodKey = e.target.value;
+    updateRoundContextBanner(currentPeriodKey);
     currentPage = 1;
     applyFiltersAndRender();
   });
@@ -230,6 +290,43 @@ function setupEventListeners() {
   modalCloseBtn.addEventListener('click', closeModal);
   courseModal.addEventListener('click', (e) => {
     if (e.target === courseModal) closeModal();
+  });
+
+  // Tie-breaker explanation toggle
+  if (quotaInfoBtn && tieBreakerPanel) {
+    quotaInfoBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const isHidden = tieBreakerPanel.style.display === 'none';
+      tieBreakerPanel.style.display = isHidden ? 'block' : 'none';
+      if (isHidden) {
+        tieBreakerPanel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }
+    });
+  }
+
+  if (statBoxQuota && tieBreakerPanel) {
+    statBoxQuota.addEventListener('click', () => {
+      const isHidden = tieBreakerPanel.style.display === 'none';
+      tieBreakerPanel.style.display = isHidden ? 'block' : 'none';
+      if (isHidden) {
+        tieBreakerPanel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }
+    });
+  }
+
+  if (tbpCloseBtn && tieBreakerPanel) {
+    tbpCloseBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      tieBreakerPanel.style.display = 'none';
+    });
+  }
+
+  // Delegated click for table header info badges
+  courseModal.addEventListener('click', (e) => {
+    if (e.target.closest('.th-with-info') && tieBreakerPanel) {
+      tieBreakerPanel.style.display = 'block';
+      tieBreakerPanel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
   });
 
   // Pagination
@@ -505,6 +602,17 @@ function createCourseCard(code, course, curRound) {
     `;
   }
 
+  let roundPriorityBadge = '';
+  if (curRound) {
+    if (curRound.round === 1) {
+      roundPriorityBadge = '<span class="badge badge-r1-priority" title="Round 1: Major & Department Priority Only">Major Priority</span>';
+    } else if (curRound.round === 2) {
+      roundPriorityBadge = '<span class="badge badge-r2-open" title="Round 2: Open to UEs, Minors & Cross-Faculty">UEs Open</span>';
+    } else if (curRound.round === 3) {
+      roundPriorityBadge = '<span class="badge badge-r3-final" title="Round 3: Final Vacancies & Appeals">Final Round</span>';
+    }
+  }
+
   let semBadge = '';
   if (course.sem_offered === 'sem1') {
     semBadge = '<span class="badge badge-sem1" title="Offered in Semester 1 Only">Sem 1 Only</span>';
@@ -519,6 +627,7 @@ function createCourseCard(code, course, curRound) {
       <div class="course-header-line">
         <div style="display:flex; align-items:center; gap:0.4rem; flex-wrap:wrap;">
           <span class="course-code">${code}</span>
+          ${roundPriorityBadge}
           ${semBadge}
           ${course.su ? '<span class="badge badge-su" title="S/U Option Available">S/U</span>' : ''}
           ${course.cscu ? '<span class="badge badge-cscu" title="CS/CU (Completed Satisfactory/Unsatisfactory)">CS/CU</span>' : ''}
@@ -684,6 +793,51 @@ function openCourseModal(code) {
     msQuotaExceeded.textContent = '-';
   }
 
+  // Reset tie-breaker panel
+  if (tieBreakerPanel) {
+    tieBreakerPanel.style.display = 'none';
+  }
+
+  // Dynamic Round Advisory Alert
+  if (modalRoundAlert) {
+    if (curRound) {
+      const r = curRound.round;
+      if (r === 1) {
+        modalRoundAlert.className = 'modal-round-alert alert-r1';
+        modalRoundAlert.style.display = 'flex';
+        modalRoundAlert.innerHTML = `
+          <div class="modal-round-alert-icon">🔒</div>
+          <div class="modal-round-alert-content">
+            <div class="modal-round-alert-title">Round 1 Protected Major Notice</div>
+            <div>These demand statistics reflect <strong>declared majors and graduation requirements only</strong>. If you are planning to bid for <strong>${code}</strong> as an Unrestricted Elective (UE) or Minor in Round 2, expect competition to rise significantly above what is shown here.</div>
+          </div>
+        `;
+      } else if (r === 2) {
+        modalRoundAlert.className = 'modal-round-alert alert-r2';
+        modalRoundAlert.style.display = 'flex';
+        modalRoundAlert.innerHTML = `
+          <div class="modal-round-alert-icon">🌐</div>
+          <div class="modal-round-alert-content">
+            <div class="modal-round-alert-title">Round 2 Open Electives Active</div>
+            <div>Unrestricted Electives (UE), Second Majors, and Minors are actively participating in this round. For high-demand courses, this is where quota contention typically peaks.</div>
+          </div>
+        `;
+      } else {
+        modalRoundAlert.className = 'modal-round-alert alert-r3';
+        modalRoundAlert.style.display = 'flex';
+        modalRoundAlert.innerHTML = `
+          <div class="modal-round-alert-icon">⚡</div>
+          <div class="modal-round-alert-content">
+            <div class="modal-round-alert-title">Round 3 Final Allocation Round</div>
+            <div>Final round before the semester commences. Allocations depend strictly on leftover vacancies from dropped courses. Quota rejections here indicate full capacities.</div>
+          </div>
+        `;
+      }
+    } else {
+      modalRoundAlert.style.display = 'none';
+    }
+  }
+
   // Populate History Table (filters out non-offered semesters)
   populateHistoryTable(course);
 
@@ -699,6 +853,7 @@ function openCourseModal(code) {
 
 function closeModal() {
   courseModal.style.display = 'none';
+  if (tieBreakerPanel) tieBreakerPanel.style.display = 'none';
   document.body.style.overflow = '';
 }
 

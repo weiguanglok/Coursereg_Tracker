@@ -103,6 +103,20 @@
             </label>
           </div>
         </div>
+
+        <!-- Dynamic Round Context & Priority Guidance Banner -->
+        <div class="round-context-banner" id="round-context-banner">
+          <div class="round-banner-icon" id="round-banner-icon">🔒</div>
+          <div class="round-banner-content">
+            <div class="round-banner-header">
+              <span class="round-banner-title" id="round-banner-title">Round 1: Protected Major Priority</span>
+              <span class="round-banner-badge" id="round-banner-badge">Priority Rules Active</span>
+            </div>
+            <p class="round-banner-desc" id="round-banner-desc">
+              Reserved strictly for Major and Department graduation requirements. Competition ratios shown here reflect only declared majors. <strong>Warning:</strong> Non-major UE demand surges heavily in Round 2.
+            </p>
+          </div>
+        </div>
       </section>
 
       <!-- Quick Metrics Summary Dashboard -->
@@ -186,9 +200,56 @@
               <span class="ms-label">Competition Ratio</span>
               <span class="ms-val" id="ms-ratio">-</span>
             </div>
-            <div class="modal-stat-box">
-              <span class="ms-label">Quota Exceeded</span>
+            <div class="modal-stat-box stat-box-clickable" id="stat-box-quota" title="Click to view CourseReg tie-breaker algorithm">
+              <div class="ms-label-with-action">
+                <span class="ms-label">Quota Exceeded</span>
+                <button type="button" class="info-pill-btn" id="quota-info-btn">Why? ⓘ</button>
+              </div>
               <span class="ms-val text-danger" id="ms-quota-exceeded">-</span>
+            </div>
+          </div>
+
+          <!-- Dynamic Round Advisory & Priority Warning in Modal -->
+          <div class="modal-round-alert" id="modal-round-alert" style="display: none;">
+            <!-- Injected via JavaScript based on current round view -->
+          </div>
+
+          <!-- Collapsible Tie-Breaker & Allocation Guide -->
+          <div class="tie-breaker-panel" id="tie-breaker-panel" style="display: none;">
+            <div class="tbp-header">
+              <div class="tbp-title">
+                <span>⚖️ Why was Quota Exceeded? (CourseReg Tie-Breaking Guide)</span>
+              </div>
+              <button type="button" class="tbp-close-btn" id="tbp-close-btn" title="Close guide" aria-label="Close guide">&times;</button>
+            </div>
+            <p class="tbp-intro">
+              In NUS CourseReg, <strong>"Quota Exceeded"</strong> means the student fulfilled all course prerequisites, had no timetable clashes, and stayed within workload limits, but could not secure a seat because demand exceeded class capacity. Allocation is settled through this 3-tier hierarchy:
+            </p>
+            <div class="tbp-tiers-grid">
+              <div class="tbp-tier-card">
+                <div class="tier-badge">Tier 1 • Decisive</div>
+                <div class="tier-title">Course Requirement Priority</div>
+                <p class="tier-detail">
+                  Major Core &amp; Faculty Requirements &gt; Second Major / Minor &gt; General Education (GE) &gt; Unrestricted Electives (UE).
+                </p>
+              </div>
+              <div class="tbp-tier-card">
+                <div class="tier-badge">Tier 2 • Seniority</div>
+                <div class="tier-title">Student Cohort</div>
+                <p class="tier-detail">
+                  Graduating Cohort (Year 4+) &gt; Year 3 &gt; Year 2 &gt; Freshmen (Year 1). Seniors receive priority for graduation.
+                </p>
+              </div>
+              <div class="tbp-tier-card">
+                <div class="tier-badge">Tier 3 • Balloting</div>
+                <div class="tier-title">Random Tie-Breaker</div>
+                <p class="tier-detail">
+                  If candidates tie in Requirement Tier and Seniority, an automated computerized balloting tie-breaker allocates remaining seats.
+                </p>
+              </div>
+            </div>
+            <div class="tbp-takeaway">
+              💡 <strong>Key Takeaway:</strong> If you plan to take this course as an elective (UE) as a junior, a high Quota Exceeded count indicates substantial risk of being balloted out by majors and graduating seniors.
             </div>
           </div>
 
@@ -229,7 +290,7 @@
                     <th>Demand</th>
                     <th>Ratio</th>
                     <th>Allocated (Main)</th>
-                    <th>Quota Exceeded</th>
+                    <th class="th-with-info" title="Students rejected because class capacity was filled by higher requirement priority or seniority">Quota Exceeded <span class="th-info-badge">ⓘ</span></th>
                     <th>Clashes / Others</th>
                   </tr>
                 </thead>
@@ -256,7 +317,7 @@
                     <th>Ratio</th>
                     <th>Main Alloc</th>
                     <th>Reserve Alloc</th>
-                    <th>Quota Exceeded</th>
+                    <th class="th-with-info" title="Students rejected because class capacity was filled by higher requirement priority or seniority">Quota Exceeded <span class="th-info-badge">ⓘ</span></th>
                     <th>Timetable Clash</th>
                     <th>Workload / Others</th>
                   </tr>
