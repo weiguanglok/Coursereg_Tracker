@@ -93,6 +93,11 @@ async function init() {
     metadata = await metaRes.json();
     coursesData = await dataRes.json();
 
+    // Pre-calculate uppercase titles for zero-overhead search filtering
+    for (const [code, course] of Object.entries(coursesData)) {
+      course._upperTitle = (course.title || '').toUpperCase();
+    }
+
     setupSelectors();
     setupEventListeners();
     applyFiltersAndRender();
@@ -200,17 +205,23 @@ function updateRoundContextBanner(periodKey) {
 
 // Setup Event Listeners
 function setupEventListeners() {
+  let searchDebounceTimer = null;
+
   searchInput.addEventListener('input', () => {
     const hasVal = Boolean(searchInput.value);
     clearSearchBtn.style.display = hasVal ? 'block' : 'none';
     if (searchShortcutHint) {
       searchShortcutHint.style.display = hasVal ? 'none' : 'block';
     }
-    currentPage = 1;
-    applyFiltersAndRender();
+    clearTimeout(searchDebounceTimer);
+    searchDebounceTimer = setTimeout(() => {
+      currentPage = 1;
+      applyFiltersAndRender();
+    }, 70);
   });
 
   clearSearchBtn.addEventListener('click', () => {
+    clearTimeout(searchDebounceTimer);
     searchInput.value = '';
     clearSearchBtn.style.display = 'none';
     if (searchShortcutHint) {
@@ -389,7 +400,7 @@ function applyFiltersAndRender() {
     // Match Query
     if (query) {
       const matchCode = code.includes(query);
-      const matchTitle = course.title && course.title.toUpperCase().includes(query);
+      const matchTitle = (course._upperTitle || (course.title ? course.title.toUpperCase() : '')).includes(query);
       if (!matchCode && !matchTitle) continue;
     }
 
@@ -481,11 +492,11 @@ function applyFiltersAndRender() {
     const rb = b.curRound;
 
     if (sortMode === 'code_asc') {
-      return a.code.localeCompare(b.code);
+      return a.code < b.code ? -1 : (a.code > b.code ? 1 : 0);
     }
 
     // If one isn't offered in current round, sink to bottom
-    if (!ra && !rb) return a.code.localeCompare(b.code);
+    if (!ra && !rb) return a.code < b.code ? -1 : (a.code > b.code ? 1 : 0);
     if (!ra) return 1;
     if (!rb) return -1;
 
@@ -534,11 +545,14 @@ function renderCurrentPage() {
   const endIndex = Math.min(startIndex + ITEMS_PER_PAGE, total);
   const pageItems = filteredCourses.slice(startIndex, endIndex);
 
-  coursesGrid.innerHTML = '';
+  // Batch DOM nodes using DocumentFragment to prevent repeated layout reflows
+  const fragment = document.createDocumentFragment();
   pageItems.forEach(({ code, course, curRound }) => {
     const card = createCourseCard(code, course, curRound);
-    coursesGrid.appendChild(card);
+    fragment.appendChild(card);
   });
+  coursesGrid.innerHTML = '';
+  coursesGrid.appendChild(fragment);
 
   // Update Pagination Controls
   if (totalPages > 1) {
