@@ -975,18 +975,54 @@ select:focus {
   line-height: 1.5;
 }
 
+/* Formula Bar */
+.tbp-formula-bar {
+  background: linear-gradient(135deg, #f0fdf4 0%, #eff6ff 100%);
+  border: 1px solid #bfdbfe;
+  border-left: 4.5px solid var(--primary);
+  border-radius: var(--radius-sm);
+  padding: 0.75rem 1rem;
+  margin-bottom: 1.15rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.formula-label {
+  font-size: 0.75rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--primary);
+}
+
+.formula-code {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.tbp-sub-note {
+  font-size: 0.72rem;
+  font-style: italic;
+  color: var(--text-muted);
+  margin-bottom: 0.4rem;
+}
+
 .tbp-tiers-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
   gap: 0.85rem;
-  margin-bottom: 1rem;
+  margin-bottom: 1.25rem;
 }
 
 .tbp-tier-card {
   background: #f8fafc;
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
-  padding: 0.85rem;
+  padding: 0.9rem;
   display: flex;
   flex-direction: column;
 }
@@ -1008,24 +1044,135 @@ select:focus {
   font-size: 0.88rem;
   font-weight: 700;
   color: var(--text-main);
-  margin-bottom: 0.35rem;
+  margin-bottom: 0.2rem;
 }
 
-.tier-detail {
+/* Rubric Lists */
+.rubric-list {
+  padding-left: 1.2rem;
+  font-size: 0.78rem;
+  color: var(--text-main);
+  line-height: 1.45;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin: 0.25rem 0 0.5rem;
+}
+
+.rubric-list li::marker {
+  font-weight: 700;
+  color: var(--primary);
+}
+
+.rubric-list-ranks {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.2rem 0.8rem;
+}
+
+.tbp-card-footnote {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  margin-top: auto;
+  padding-top: 0.5rem;
+  border-top: 1px dashed var(--border);
+  font-style: italic;
+}
+
+/* Tie Breakers Section */
+.tbp-tiebreakers-section {
+  background: #f8fafc;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 1rem 1.15rem;
+  margin-bottom: 1.15rem;
+}
+
+.tbp-subheading {
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: var(--primary);
+  margin-bottom: 0.2rem;
+}
+
+.tbp-subtext {
   font-size: 0.78rem;
   color: var(--text-muted);
-  line-height: 1.45;
-  margin: 0;
+  margin-bottom: 0.75rem;
 }
 
-.tbp-takeaway {
-  background: #fff8e6;
+.tb-steps-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.tb-step-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.65rem;
+  background: #ffffff;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 0.5rem 0.75rem;
+  font-size: 0.8rem;
+  line-height: 1.4;
+}
+
+.tb-step-num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  background: var(--primary-light);
+  color: var(--primary);
+  font-size: 0.75rem;
+  font-weight: 800;
+  border-radius: 50%;
+  flex-shrink: 0;
+  margin-top: 0.1rem;
+}
+
+.tb-step-ballot {
+  background: #fffbeb;
+  border-color: #fde68a;
+}
+
+.tb-step-ballot .tb-step-num {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.tb-step-info strong {
+  color: var(--text-main);
+}
+
+/* Takeaways Grid */
+.tbp-takeaways-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.85rem;
+}
+
+.takeaway-card {
+  background: #fffbeb;
   border: 1px solid #fde68a;
   border-radius: var(--radius-sm);
   padding: 0.75rem 0.9rem;
-  font-size: 0.82rem;
-  color: #78350f;
+  font-size: 0.8rem;
   line-height: 1.45;
+  color: #78350f;
+  display: flex;
+  gap: 0.5rem;
+  align-items: flex-start;
+}
+
+.tc-icon {
+  font-size: 1.15rem;
+  flex-shrink: 0;
+  line-height: 1;
+  margin-top: 0.1rem;
 }
 
 /* Table Header Info Badge */

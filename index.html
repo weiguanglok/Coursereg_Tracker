@@ -218,38 +218,135 @@
           <div class="tie-breaker-panel" id="tie-breaker-panel" style="display: none;">
             <div class="tbp-header">
               <div class="tbp-title">
-                <span>⚖️ Why was Quota Exceeded? (CourseReg Tie-Breaking Guide)</span>
+                <span>⚖️ Official NUS CourseReg Priority Scoring &amp; Tie-Breakers</span>
               </div>
               <button type="button" class="tbp-close-btn" id="tbp-close-btn" title="Close guide" aria-label="Close guide">&times;</button>
             </div>
+
             <p class="tbp-intro">
-              In NUS CourseReg, <strong>"Quota Exceeded"</strong> means the student fulfilled all course prerequisites, had no timetable clashes, and stayed within workload limits, but could not secure a seat because demand exceeded class capacity. Allocation is settled through this 3-tier hierarchy:
+              When course demand exceeds available places, CourseReg allocates seats using each applicant's <strong>Priority Score</strong>. If scores are tied, <strong>official tie-breakers</strong> determine the final allocation in strict descending order.
             </p>
+
+            <!-- Priority Score Formula Bar -->
+            <div class="tbp-formula-bar">
+              <span class="formula-label">Official Scoring Rubric:</span>
+              <span class="formula-code">Priority Score = A (Programme) &times; B (Seniority) &times; C (Rank)</span>
+            </div>
+
+            <!-- 3 Scoring Rubrics Grid -->
             <div class="tbp-tiers-grid">
+              <!-- Category A -->
               <div class="tbp-tier-card">
-                <div class="tier-badge">Tier 1 • Decisive</div>
-                <div class="tier-title">Course Requirement Priority</div>
-                <p class="tier-detail">
-                  Major Core &amp; Faculty Requirements &gt; Second Major / Minor &gt; General Education (GE) &gt; Unrestricted Electives (UE).
-                </p>
+                <div class="tier-badge">Category A</div>
+                <div class="tier-title">Programme Requirements</div>
+                <div class="tbp-sub-note">Descending order of points:</div>
+                <ol class="rubric-list">
+                  <li>UTown / NUSC courses</li>
+                  <li>Major core &amp; Primary Major 1st Specialisation</li>
+                  <li>Primary Major courses</li>
+                  <li>Second Major Specialisation courses</li>
+                  <li>Faculty Requirement courses</li>
+                  <li>Second Major courses</li>
+                  <li>Restricted / Direct Minor courses</li>
+                  <li>Unrestricted Elective (UE) / General Education (GE)</li>
+                </ol>
               </div>
+
+              <!-- Category B -->
               <div class="tbp-tier-card">
-                <div class="tier-badge">Tier 2 • Seniority</div>
-                <div class="tier-title">Student Cohort</div>
-                <p class="tier-detail">
-                  Graduating Cohort (Year 4+) &gt; Year 3 &gt; Year 2 &gt; Freshmen (Year 1). Seniors receive priority for graduation.
-                </p>
+                <div class="tier-badge">Category B</div>
+                <div class="tier-title">Student Seniority</div>
+                <div class="tbp-sub-note">Descending order of points:</div>
+                <ol class="rubric-list">
+                  <li><strong>Year 4 / Graduating Year 3</strong> (Highest points)</li>
+                  <li><strong>Year 3</strong></li>
+                  <li><strong>Year 2</strong></li>
+                  <li><strong>Year 1</strong> (Freshmen)</li>
+                </ol>
+                <div class="tbp-card-footnote">Students closer to graduation are awarded higher point multipliers.</div>
               </div>
+
+              <!-- Category C -->
               <div class="tbp-tier-card">
-                <div class="tier-badge">Tier 3 • Balloting</div>
-                <div class="tier-title">Random Tie-Breaker</div>
-                <p class="tier-detail">
-                  If candidates tie in Requirement Tier and Seniority, an automated computerized balloting tie-breaker allocates remaining seats.
-                </p>
+                <div class="tier-badge">Category C</div>
+                <div class="tier-title">Rank Preference of Courses</div>
+                <div class="tbp-sub-note">Descending order of points:</div>
+                <ol class="rubric-list rubric-list-ranks">
+                  <li><strong>Rank 1</strong> (Highest points)</li>
+                  <li><strong>Rank 2</strong></li>
+                  <li><strong>Rank 3</strong></li>
+                  <li><strong>Rank 4</strong></li>
+                  <li><strong>Rank 5</strong></li>
+                  <li><strong>Rank 6</strong></li>
+                  <li><strong>Rank 7</strong></li>
+                  <li><strong>Rank 8</strong> (Lowest points)</li>
+                </ol>
+                <div class="tbp-card-footnote">Rank your highest-priority / high-competition courses at Rank 1.</div>
               </div>
             </div>
-            <div class="tbp-takeaway">
-              💡 <strong>Key Takeaway:</strong> If you plan to take this course as an elective (UE) as a junior, a high Quota Exceeded count indicates substantial risk of being balloted out by majors and graduating seniors.
+
+            <!-- Official Tie-Breakers Section -->
+            <div class="tbp-tiebreakers-section">
+              <div class="tbp-subheading">
+                <span>🎯 Official Undergraduate Tie-Breakers (In Descending Order of Consideration)</span>
+              </div>
+              <p class="tbp-subtext">Evaluated when applicants have the exact same Priority Score (A &times; B &times; C):</p>
+              <div class="tb-steps-list">
+                <div class="tb-step-item">
+                  <span class="tb-step-num">1</span>
+                  <div class="tb-step-info">
+                    <strong>Minimum Workload Shortfall:</strong> Students who have not yet attained their minimum workload are prioritized first.
+                  </div>
+                </div>
+                <div class="tb-step-item">
+                  <span class="tb-step-num">2</span>
+                  <div class="tb-step-info">
+                    <strong>Home Faculty Match:</strong> Student's home faculty is the course host faculty.
+                  </div>
+                </div>
+                <div class="tb-step-item">
+                  <span class="tb-step-num">3</span>
+                  <div class="tb-step-info">
+                    <strong>Carded National Athletes:</strong> Recognized national athletes (w.e.f. Sem 2, AY2022/23).
+                  </div>
+                </div>
+                <div class="tb-step-item">
+                  <span class="tb-step-num">4</span>
+                  <div class="tb-step-info">
+                    <strong>Course Feedback Points:</strong> Earned by submitting module feedback at the end of each semester.
+                  </div>
+                </div>
+                <div class="tb-step-item">
+                  <span class="tb-step-num">5</span>
+                  <div class="tb-step-info">
+                    <strong>Course Planning Exercise (CPEx) Points:</strong> Participation points from prior CPEx rounds (w.e.f. Sem 1, AY2021/22).
+                  </div>
+                </div>
+                <div class="tb-step-item tb-step-ballot">
+                  <span class="tb-step-num">6</span>
+                  <div class="tb-step-info">
+                    <strong>Random Balloting:</strong> Computerized randomized selection (final resort when all criteria above are tied).
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Key Strategy Takeaways -->
+            <div class="tbp-takeaways-grid">
+              <div class="takeaway-card">
+                <span class="tc-icon">⚠️</span>
+                <div>
+                  <strong>Why UEs / GEs face high Quota Exceeded rates:</strong>
+                  Unrestricted Electives and General Education courses sit at the bottom of Category A (Item 8). A junior bidding for a course as a UE will almost always have a lower Priority Score than majors or minors, regardless of their rank preference.
+                </div>
+              </div>
+              <div class="takeaway-card">
+                <span class="tc-icon">⭐</span>
+                <div>
+                  <strong>Free Tie-Breaker Advantage:</strong>
+                  Always complete Course Feedback and CPEx exercises! If you tie in Priority Score with another student in your cohort, these points secure the seat before random balloting is invoked.
+                </div>
+              </div>
             </div>
           </div>
 
