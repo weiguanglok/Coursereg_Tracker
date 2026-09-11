@@ -108,6 +108,17 @@ async function init() {
   }
 }
 
+// Format competition ratios cleanly without awkward percentages (>100%) or trailing zeros
+function formatRatio(ratio) {
+  if (ratio === null || ratio === undefined || isNaN(ratio)) return '-';
+  if (ratio > 1.0) {
+    if (ratio >= 100) return `${Math.round(ratio)}x`;
+    if (ratio >= 10) return `${ratio.toFixed(1)}x`;
+    return `${ratio.toFixed(2)}x`;
+  }
+  return `${Math.round(ratio * 100)}%`;
+}
+
 // Setup Dropdowns and Metadata
 function setupSelectors() {
   const periods = metadata.periods || [];
@@ -451,7 +462,14 @@ function applyFiltersAndRender() {
 
   if (filteredMaxRatioCourse) {
     statMostPopular.textContent = filteredMaxRatioCourse.code;
-    statMostPopularRatio.textContent = `${(filteredMaxRatioCourse.ratio * 100).toFixed(0)}% (${filteredMaxRatioCourse.ratio.toFixed(2)}x) • ${filteredMaxRatioCourse.demand} apps / ${filteredMaxRatioCourse.vacancy} seats`;
+    const appsText = filteredMaxRatioCourse.demand === 1 ? '1 application' : `${filteredMaxRatioCourse.demand} apps`;
+    const seatsText = filteredMaxRatioCourse.vacancy === 1 ? '1 seat' : `${filteredMaxRatioCourse.vacancy} seats`;
+    if (filteredMaxRatioCourse.ratio > 1.0) {
+      statMostPopularRatio.textContent = `${formatRatio(filteredMaxRatioCourse.ratio)} Oversubscribed • ${appsText} for ${seatsText}`;
+    } else {
+      const pct = Math.round(filteredMaxRatioCourse.ratio * 100);
+      statMostPopularRatio.textContent = `${pct}% Demand • ${appsText} for ${seatsText}`;
+    }
   } else {
     statMostPopular.textContent = 'None';
     statMostPopularRatio.textContent = '-';
@@ -554,27 +572,27 @@ function createCourseCard(code, course, curRound) {
 
     if (curRound.vacancy === 0) {
       if (curRound.demand > 0) {
-        badgeHtml = `<span class="badge badge-oversubscribed">0 Seats (+${curRound.demand} Shortfall)</span>`;
-        ratioPct = `+${curRound.demand} Shortfall`;
+        badgeHtml = `<span class="badge badge-oversubscribed">0 Seats (+${curRound.demand} Demand)</span>`;
+        ratioPct = '0 Seats';
         ratioClass = 'val-danger';
       } else {
         badgeHtml = `<span class="badge badge-outline">0 Vacancy</span>`;
         ratioPct = '-';
       }
     } else {
-      const pct = Math.round(curRound.ratio * 100);
       const shortfall = curRound.demand - curRound.vacancy;
 
       if (curRound.ratio > 1.0) {
-        badgeHtml = `<span class="badge badge-oversubscribed">${curRound.ratio.toFixed(2)}x (+${shortfall} Shortfall)</span>`;
-        ratioPct = `${curRound.ratio.toFixed(2)}x (+${shortfall})`;
+        badgeHtml = `<span class="badge badge-oversubscribed">+${shortfall} Shortfall</span>`;
+        ratioPct = formatRatio(curRound.ratio);
         ratioClass = 'val-danger';
       } else if (curRound.ratio >= 0.8) {
-        badgeHtml = `<span class="badge badge-warning">${pct}% Demand</span>`;
+        const pct = Math.round(curRound.ratio * 100);
+        badgeHtml = `<span class="badge badge-warning">High Demand (${pct}%)</span>`;
         ratioPct = `${pct}%`;
       } else {
-        badgeHtml = `<span class="badge badge-available">Seats Available (${pct}%)</span>`;
-        ratioPct = `${pct}%`;
+        badgeHtml = `<span class="badge badge-available">Seats Available</span>`;
+        ratioPct = `${Math.round(curRound.ratio * 100)}%`;
       }
     }
   } else {
@@ -602,17 +620,6 @@ function createCourseCard(code, course, curRound) {
     `;
   }
 
-  let roundPriorityBadge = '';
-  if (curRound) {
-    if (curRound.round === 1) {
-      roundPriorityBadge = '<span class="badge badge-r1-priority" title="Round 1: Major & Department Priority Only">Major Priority</span>';
-    } else if (curRound.round === 2) {
-      roundPriorityBadge = '<span class="badge badge-r2-open" title="Round 2: Open to UEs, Minors & Cross-Faculty">UEs Open</span>';
-    } else if (curRound.round === 3) {
-      roundPriorityBadge = '<span class="badge badge-r3-final" title="Round 3: Final Vacancies & Appeals">Final Round</span>';
-    }
-  }
-
   let semBadge = '';
   if (course.sem_offered === 'sem1') {
     semBadge = '<span class="badge badge-sem1" title="Offered in Semester 1 Only">Sem 1 Only</span>';
@@ -627,7 +634,6 @@ function createCourseCard(code, course, curRound) {
       <div class="course-header-line">
         <div style="display:flex; align-items:center; gap:0.4rem; flex-wrap:wrap;">
           <span class="course-code">${code}</span>
-          ${roundPriorityBadge}
           ${semBadge}
           ${course.su ? '<span class="badge badge-su" title="S/U Option Available">S/U</span>' : ''}
           ${course.cscu ? '<span class="badge badge-cscu" title="CS/CU (Completed Satisfactory/Unsatisfactory)">CS/CU</span>' : ''}
@@ -776,13 +782,26 @@ function openCourseModal(code) {
     msVacancy.textContent = curRound.vacancy.toLocaleString();
     msDemand.textContent = curRound.demand.toLocaleString();
     if (curRound.vacancy === 0) {
-      msRatio.textContent = curRound.demand > 0 ? `+${curRound.demand} Shortfall (0 Seats)` : '0 Seats';
+      if (curRound.demand > 0) {
+        msRatio.textContent = '0 Seats';
+        msRatio.className = 'ms-val text-danger';
+        msRatio.title = `0 seats available with ${curRound.demand} applications`;
+      } else {
+        msRatio.textContent = '-';
+        msRatio.className = 'ms-val';
+        msRatio.title = '';
+      }
     } else {
       const shortfall = curRound.demand - curRound.vacancy;
       if (curRound.ratio > 1.0) {
-        msRatio.textContent = `${(curRound.ratio * 100).toFixed(0)}% (${curRound.ratio.toFixed(2)}x • +${shortfall} shortfall)`;
+        msRatio.textContent = formatRatio(curRound.ratio);
+        msRatio.className = 'ms-val text-danger';
+        msRatio.title = `${formatRatio(curRound.ratio)} oversubscribed (+${shortfall} shortfall)`;
       } else {
-        msRatio.textContent = `${(curRound.ratio * 100).toFixed(0)}% (${curRound.ratio.toFixed(2)}x)`;
+        const pct = Math.round(curRound.ratio * 100);
+        msRatio.textContent = `${pct}%`;
+        msRatio.className = 'ms-val';
+        msRatio.title = `${pct}% of available seats filled`;
       }
     }
     msQuotaExceeded.textContent = curRound.unalloc_quota.toLocaleString();
@@ -877,17 +896,16 @@ function populateHistoryTable(course) {
 
     if (h.vacancy === 0) {
       if (h.demand > 0) {
-        ratioDisplay = `+${h.demand} Shortfall (0 Seats)`;
+        ratioDisplay = '0 Seats';
         ratioClass = 'text-danger font-bold';
       }
     } else {
-      const pct = (h.ratio * 100).toFixed(0);
       const shortfall = h.demand - h.vacancy;
       if (h.ratio > 1.0) {
-        ratioDisplay = `${pct}% (${h.ratio.toFixed(2)}x • +${shortfall})`;
+        ratioDisplay = `${formatRatio(h.ratio)} (+${shortfall})`;
         ratioClass = 'text-danger font-bold';
       } else {
-        ratioDisplay = `${pct}% (${h.ratio.toFixed(2)}x)`;
+        ratioDisplay = `${Math.round(h.ratio * 100)}%`;
       }
     }
 
@@ -925,9 +943,10 @@ function populateClassesTable(curRound) {
     if (c.vac > 0) {
       const shortfall = c.dem - c.vac;
       isOver = c.dem > c.vac;
-      ratio = isOver ? `${(c.dem / c.vac).toFixed(2)}x (+${shortfall})` : `${(c.dem / c.vac).toFixed(2)}x`;
+      const classRatio = c.dem / c.vac;
+      ratio = isOver ? `${formatRatio(classRatio)} (+${shortfall})` : formatRatio(classRatio);
     } else if (c.dem > 0) {
-      ratio = `+${c.dem} Shortfall`;
+      ratio = `0 Seats (+${c.dem})`;
       isOver = true;
     }
 
@@ -1057,7 +1076,7 @@ function updateYoYInsight(course, semNum, targetRound) {
     const shortfall = curr.demand - curr.vacancy;
     const compText = curr.vacancy === 0
       ? `0 Seats (+${curr.demand} Shortfall)`
-      : `${(curr.ratio * 100).toFixed(0)}% (${curr.ratio.toFixed(2)}x ${isOver ? '• +' + shortfall + ' Shortfall' : ''})`;
+      : `${formatRatio(curr.ratio)}${isOver ? ' (+ ' + shortfall + ' Shortfall)' : ''}`;
 
     yoyInsightBox.innerHTML = `
       <div class="yoy-insight-header">
@@ -1088,7 +1107,7 @@ function updateYoYInsight(course, semNum, targetRound) {
       <div class="yoy-insight-metrics">
         <div class="yoy-metric-item">Past Demand: <strong>${past.demand}</strong></div>
         <div class="yoy-metric-item">Past Seats: <strong>${past.vacancy}</strong></div>
-        <div class="yoy-metric-item">Past Competition: <strong>${past.vacancy === 0 ? '0 Seats (+ ' + past.demand + ' Shortfall)' : past.ratio.toFixed(2) + 'x'}</strong></div>
+        <div class="yoy-metric-item">Past Competition: <strong>${past.vacancy === 0 ? '0 Seats (+ ' + past.demand + ' Shortfall)' : formatRatio(past.ratio)}</strong></div>
       </div>
       <div class="yoy-verdict"><em>No applications recorded for Round ${roundNum} in ${currAyLabel} yet.</em></div>
     `;
@@ -1118,17 +1137,17 @@ function updateYoYInsight(course, semNum, targetRound) {
   } else {
     const ratioDiff = curr.ratio - past.ratio;
     if (curr.ratio > past.ratio + 0.1) {
-      trendVerdict = `⚠️ <strong>Higher Competition:</strong> Competition rose by <strong>+${ratioDiff.toFixed(2)}x</strong> over ${pastAyLabel} (+${currShortfall} shortfall vs ${pastShortfall > 0 ? '+' + pastShortfall : '0'}). Demand changed by <strong>${demSign} (${demPct}%)</strong> vs seats <strong>${vacSign} (${vacPct}%)</strong>.`;
+      trendVerdict = `⚠️ <strong>Higher Competition:</strong> Competition rose by <strong>+${ratioDiff.toFixed(1)}x</strong> over ${pastAyLabel} (+${currShortfall} shortfall vs ${pastShortfall > 0 ? '+' + pastShortfall : '0'}). Demand changed by <strong>${demSign} (${demPct}%)</strong> vs seats <strong>${vacSign} (${vacPct}%)</strong>.`;
     } else if (curr.ratio < past.ratio - 0.1) {
-      trendVerdict = `📉 <strong>Easier to Secure:</strong> Competition dropped by <strong>${Math.abs(ratioDiff).toFixed(2)}x</strong> compared to ${pastAyLabel}. Available seats changed by <strong>${vacSign} (${vacPct}%)</strong> while demand shifted by <strong>${demSign} (${demPct}%)</strong>.`;
+      trendVerdict = `📉 <strong>Easier to Secure:</strong> Competition dropped by <strong>${Math.abs(ratioDiff).toFixed(1)}x</strong> compared to ${pastAyLabel}. Available seats changed by <strong>${vacSign} (${vacPct}%)</strong> while demand shifted by <strong>${demSign} (${demPct}%)</strong>.`;
     } else {
-      trendVerdict = `⚖️ <strong>Stable Competition:</strong> Competition remained very close to ${pastAyLabel} (${curr.ratio.toFixed(2)}x vs ${past.ratio.toFixed(2)}x).`;
+      trendVerdict = `⚖️ <strong>Stable Competition:</strong> Competition remained very close to ${pastAyLabel} (${formatRatio(curr.ratio)} vs ${formatRatio(past.ratio)}).`;
     }
   }
 
   let baseMetricItem = '';
   if (base && (base.demand > 0 || base.vacancy > 0)) {
-    baseMetricItem = `<div class="yoy-metric-item">AY24/25: <strong>${base.demand} Demand</strong> / ${base.vacancy} Seats (${base.vacancy === 0 ? '0 Seats' : base.ratio.toFixed(2) + 'x'})</div>`;
+    baseMetricItem = `<div class="yoy-metric-item">AY24/25: <strong>${base.demand} Demand</strong> / ${base.vacancy} Seats (${base.vacancy === 0 ? '0 Seats' : formatRatio(base.ratio)})</div>`;
   }
 
   yoyInsightBox.innerHTML = `
@@ -1140,8 +1159,8 @@ function updateYoYInsight(course, semNum, targetRound) {
     </div>
     <div class="yoy-insight-metrics">
       ${baseMetricItem}
-      <div class="yoy-metric-item">${pastAyLabel}: <strong>${past.demand} Demand</strong> / ${past.vacancy} Seats (${past.vacancy === 0 ? '0 Seats' : past.ratio.toFixed(2) + 'x'})</div>
-      <div class="yoy-metric-item">${currAyLabel}: <strong>${curr.demand} Demand</strong> / ${curr.vacancy} Seats (${curr.vacancy === 0 ? '0 Seats' : curr.ratio.toFixed(2) + 'x'})</div>
+      <div class="yoy-metric-item">${pastAyLabel}: <strong>${past.demand} Demand</strong> / ${past.vacancy} Seats (${past.vacancy === 0 ? '0 Seats' : formatRatio(past.ratio)})</div>
+      <div class="yoy-metric-item">${currAyLabel}: <strong>${curr.demand} Demand</strong> / ${curr.vacancy} Seats (${curr.vacancy === 0 ? '0 Seats' : formatRatio(curr.ratio)})</div>
     </div>
     <div class="yoy-verdict">${trendVerdict}</div>
   `;
