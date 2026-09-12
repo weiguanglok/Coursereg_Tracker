@@ -58,6 +58,9 @@ const historyTableBody = document.getElementById('history-table-body');
 const classesTableBody = document.getElementById('classes-table-body');
 const classBreakdownRoundName = document.getElementById('class-breakdown-round-name');
 
+// Theme Mode Elements
+const themeSegBtns = document.querySelectorAll('.theme-seg-btn');
+
 // Chart Mode Controls
 const btnViewS1 = document.getElementById('btn-view-s1');
 const btnViewS2 = document.getElementById('btn-view-s2');
@@ -77,8 +80,61 @@ const statTotalVacancy = document.getElementById('stat-total-vacancy');
 const statMostPopular = document.getElementById('stat-most-popular');
 const statMostPopularRatio = document.getElementById('stat-most-popular-ratio');
 
+// Theme Management (System, Light, Dark)
+function initTheme() {
+  const savedTheme = localStorage.getItem('coursereg_theme') || 'system';
+  applyTheme(savedTheme, false);
+
+  themeSegBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      const themeVal = btn.dataset.themeVal;
+      applyTheme(themeVal, true);
+    });
+  });
+
+  // Listen for real-time OS preference changes
+  if (window.matchMedia) {
+    const darkQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    const handleOsThemeChange = () => {
+      const currentSetting = localStorage.getItem('coursereg_theme') || 'system';
+      if (currentSetting === 'system') {
+        applyTheme('system', false);
+      }
+    };
+    if (darkQuery.addEventListener) {
+      darkQuery.addEventListener('change', handleOsThemeChange);
+    } else if (darkQuery.addListener) {
+      darkQuery.addListener(handleOsThemeChange);
+    }
+  }
+}
+
+function applyTheme(themeSetting, persist = true) {
+  if (persist) {
+    try {
+      localStorage.setItem('coursereg_theme', themeSetting);
+    } catch (e) {}
+  }
+
+  const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+  const effectiveTheme = themeSetting === 'system' ? (prefersDark ? 'dark' : 'light') : themeSetting;
+
+  document.documentElement.setAttribute('data-theme', effectiveTheme);
+  document.documentElement.setAttribute('data-theme-setting', themeSetting);
+
+  themeSegBtns.forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.themeVal === themeSetting);
+  });
+
+  // If a modal chart is currently visible, redraw it with appropriate dark/light colors
+  if (activeChart && currentModalCourse && courseModal && courseModal.style.display !== 'none') {
+    renderHistoricalChart(currentModalCourse);
+  }
+}
+
 // Initialize Application
 async function init() {
+  initTheme();
   try {
     // Load metadata and course dataset
     const [metaRes, dataRes] = await Promise.all([
@@ -1188,6 +1244,17 @@ function renderHistoricalChart(course) {
     activeChart.destroy();
   }
 
+  const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+  const currVacBg = isDark ? 'rgba(82, 157, 255, 0.92)' : 'rgba(0, 61, 124, 0.95)';
+  const currVacBorder = isDark ? '#3b82f6' : '#002752';
+  const pastVacBg = isDark ? 'rgba(148, 163, 184, 0.65)' : 'rgba(148, 163, 184, 0.85)';
+  const y24VacBg = isDark ? 'rgba(100, 116, 139, 0.65)' : 'rgba(203, 213, 225, 0.85)';
+  const axisTicksColor = isDark ? '#94a3b8' : '#64748b';
+  const axisGridColor = isDark ? 'rgba(255, 255, 255, 0.08)' : '#f1f5f9';
+  const legendTextColor = isDark ? '#f1f5f9' : '#0f172a';
+  const tooltipBg = isDark ? 'rgba(21, 29, 44, 0.95)' : 'rgba(15, 23, 42, 0.95)';
+  const tooltipBorder = isDark ? '#263346' : 'transparent';
+
   const chartSectionTitle = document.getElementById('chart-section-title');
 
   if (currentChartMode === 's1' || currentChartMode === 's2') {
@@ -1236,7 +1303,7 @@ function renderHistoricalChart(course) {
         {
           label: 'AY24/25 S1 Vacancy',
           data: y24Vac,
-          backgroundColor: 'rgba(203, 213, 225, 0.85)',
+          backgroundColor: y24VacBg,
           borderColor: '#94a3b8',
           borderWidth: 1,
           borderRadius: 4
@@ -1252,7 +1319,7 @@ function renderHistoricalChart(course) {
         {
           label: 'AY25/26 S1 Vacancy',
           data: y25Vac,
-          backgroundColor: 'rgba(148, 163, 184, 0.85)',
+          backgroundColor: pastVacBg,
           borderColor: '#64748b',
           borderWidth: 1,
           borderRadius: 4
@@ -1268,8 +1335,8 @@ function renderHistoricalChart(course) {
         {
           label: 'AY26/27 S1 Vacancy',
           data: y26Vac,
-          backgroundColor: 'rgba(0, 61, 124, 0.95)',
-          borderColor: '#002752',
+          backgroundColor: currVacBg,
+          borderColor: currVacBorder,
           borderWidth: 1,
           borderRadius: 4
         }
@@ -1300,7 +1367,7 @@ function renderHistoricalChart(course) {
         {
           label: 'AY24/25 S2 Vacancy',
           data: y24Vac,
-          backgroundColor: 'rgba(148, 163, 184, 0.85)',
+          backgroundColor: pastVacBg,
           borderColor: '#64748b',
           borderWidth: 1,
           borderRadius: 4
@@ -1316,8 +1383,8 @@ function renderHistoricalChart(course) {
         {
           label: 'AY25/26 S2 Vacancy',
           data: y25Vac,
-          backgroundColor: 'rgba(0, 61, 124, 0.95)',
-          borderColor: '#002752',
+          backgroundColor: currVacBg,
+          borderColor: currVacBorder,
           borderWidth: 1,
           borderRadius: 4
         }
@@ -1344,13 +1411,18 @@ function renderHistoricalChart(course) {
           legend: {
             position: 'top',
             labels: {
+              color: legendTextColor,
               font: { family: "'Plus Jakarta Sans', sans-serif", weight: '600', size: 11 },
               usePointStyle: true,
               boxWidth: 8
             }
           },
           tooltip: {
-            backgroundColor: 'rgba(15, 23, 42, 0.95)',
+            backgroundColor: tooltipBg,
+            borderColor: tooltipBorder,
+            borderWidth: isDark ? 1 : 0,
+            titleColor: '#ffffff',
+            bodyColor: '#e2e8f0',
             titleFont: { family: "'Plus Jakarta Sans', sans-serif", weight: '700', size: 13 },
             bodyFont: { family: "'Plus Jakarta Sans', sans-serif", size: 12 },
             padding: 10,
@@ -1360,12 +1432,19 @@ function renderHistoricalChart(course) {
         scales: {
           x: {
             grid: { display: false },
-            ticks: { font: { family: "'Plus Jakarta Sans', sans-serif", size: 11, weight: '600' } }
+            ticks: {
+              color: axisTicksColor,
+              font: { family: "'Plus Jakarta Sans', sans-serif", size: 11, weight: '600' }
+            }
           },
           y: {
             beginAtZero: true,
-            grid: { color: '#f1f5f9' },
-            ticks: { font: { family: "'Plus Jakarta Sans', sans-serif", size: 10 }, precision: 0 }
+            grid: { color: axisGridColor },
+            ticks: {
+              color: axisTicksColor,
+              font: { family: "'Plus Jakarta Sans', sans-serif", size: 10 },
+              precision: 0
+            }
           }
         }
       }
@@ -1421,8 +1500,8 @@ function renderHistoricalChart(course) {
           {
             label: 'Available Vacancy (Seats)',
             data: vacancyData,
-            backgroundColor: 'rgba(0, 61, 124, 0.85)',
-            borderColor: '#003d7c',
+            backgroundColor: currVacBg,
+            borderColor: currVacBorder,
             borderWidth: 1,
             borderRadius: 4
           }
@@ -1436,21 +1515,40 @@ function renderHistoricalChart(course) {
           legend: {
             position: 'top',
             labels: {
+              color: legendTextColor,
               font: { family: "'Plus Jakarta Sans', sans-serif", weight: '600', size: 11 },
               usePointStyle: true,
               boxWidth: 8
             }
+          },
+          tooltip: {
+            backgroundColor: tooltipBg,
+            borderColor: tooltipBorder,
+            borderWidth: isDark ? 1 : 0,
+            titleColor: '#ffffff',
+            bodyColor: '#e2e8f0',
+            titleFont: { family: "'Plus Jakarta Sans', sans-serif", weight: '700', size: 13 },
+            bodyFont: { family: "'Plus Jakarta Sans', sans-serif", size: 12 },
+            padding: 10,
+            cornerRadius: 6
           }
         },
         scales: {
           x: {
             grid: { display: false },
-            ticks: { font: { family: "'Plus Jakarta Sans', sans-serif", size: 10 } }
+            ticks: {
+              color: axisTicksColor,
+              font: { family: "'Plus Jakarta Sans', sans-serif", size: 10 }
+            }
           },
           y: {
             beginAtZero: true,
-            grid: { color: '#f1f5f9' },
-            ticks: { font: { family: "'Plus Jakarta Sans', sans-serif", size: 10 }, precision: 0 }
+            grid: { color: axisGridColor },
+            ticks: {
+              color: axisTicksColor,
+              font: { family: "'Plus Jakarta Sans', sans-serif", size: 10 },
+              precision: 0
+            }
           }
         }
       }

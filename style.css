@@ -29,6 +29,35 @@
   --color-danger-dark: #b91c1c;
 }
 
+[data-theme="dark"] {
+  --primary: #529dff;
+  --primary-dark: #2563eb;
+  --primary-light: rgba(59, 130, 246, 0.18);
+  --accent: #ff922b;
+  --accent-light: rgba(249, 115, 22, 0.18);
+  --bg-main: #0b0f19;
+  --bg-card: #151d2c;
+  --bg-surface-raised: #1c2638;
+  --text-main: #f1f5f9;
+  --text-muted: #94a3b8;
+  --text-subtle: #64748b;
+  --border: #263346;
+  --border-focus: #60a5fa;
+
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.45);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.55), 0 2px 4px -2px rgba(0, 0, 0, 0.45);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.65), 0 4px 6px -4px rgba(0, 0, 0, 0.5);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.75), 0 8px 10px -6px rgba(0, 0, 0, 0.6);
+
+  --color-success: #34d399;
+  --color-success-bg: rgba(16, 185, 129, 0.16);
+  --color-warning: #fbbf24;
+  --color-warning-bg: rgba(245, 158, 11, 0.16);
+  --color-danger: #f87171;
+  --color-danger-bg: rgba(239, 68, 68, 0.18);
+  --color-danger-dark: #fca5a5;
+}
+
 * {
   box-sizing: border-box;
   margin: 0;
@@ -108,6 +137,62 @@ body {
   color: var(--primary);
 }
 
+/* Theme Segmented Control */
+.theme-segmented-control {
+  display: inline-flex;
+  align-items: center;
+  background: #f1f5f9;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-full);
+  padding: 2.5px;
+  gap: 2px;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+[data-theme="dark"] .theme-segmented-control {
+  background: #0d131f;
+  border-color: var(--border);
+}
+
+.theme-seg-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  background: transparent;
+  border: none;
+  padding: 0.28rem 0.6rem;
+  border-radius: var(--radius-full);
+  font-family: inherit;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  line-height: 1;
+  user-select: none;
+}
+
+.theme-seg-btn:hover {
+  color: var(--text-main);
+}
+
+.theme-seg-btn.active {
+  background: #ffffff;
+  color: var(--primary);
+  font-weight: 700;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+[data-theme="dark"] .theme-seg-btn.active {
+  background: #1e293b;
+  color: var(--primary);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.45);
+}
+
+.theme-seg-btn svg {
+  flex-shrink: 0;
+}
+
 /* Main Layout */
 .main-layout {
   max-width: 1280px;
@@ -150,14 +235,14 @@ body {
   border: 2px solid var(--border);
   border-radius: var(--radius-md);
   outline: none;
-  transition: border-color 0.2s, box-shadow 0.2s;
-  background: #fdfdfd;
+  transition: border-color 0.2s, box-shadow 0.2s, background-color 0.2s;
+  background: var(--bg-card);
 }
 
 #search-input:focus {
   border-color: var(--primary);
-  box-shadow: 0 0 0 4px rgba(0, 61, 124, 0.12);
-  background: #ffffff;
+  box-shadow: 0 0 0 4px var(--primary-light);
+  background: var(--bg-card);
 }
 
 .clear-btn {
@@ -184,11 +269,12 @@ body {
 }
 
 .search-shortcut-hint kbd {
-  background: #f1f5f9;
+  background: var(--bg-surface-raised, #f1f5f9);
   border: 1px solid var(--border);
   border-radius: 4px;
   padding: 2px 6px;
   font-weight: 600;
+  color: var(--text-muted);
 }
 
 /* Filters Bar */
@@ -219,12 +305,17 @@ select {
   padding: 0.6rem 0.85rem;
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
-  background-color: #fff;
+  background-color: var(--bg-card);
   font-size: 0.9rem;
   color: var(--text-main);
   outline: none;
   cursor: pointer;
-  transition: border-color 0.2s;
+  transition: border-color 0.2s, background-color 0.2s;
+}
+
+select option {
+  background-color: var(--bg-card);
+  color: var(--text-main);
 }
 
 select:focus {
@@ -1400,7 +1491,7 @@ select:focus {
   text-align: center;
   padding: 2rem 1rem;
   border-top: 1px solid var(--border);
-  background: #fff;
+  background: var(--bg-card);
   font-size: 0.82rem;
   color: var(--text-muted);
 }
@@ -1417,6 +1508,299 @@ select:focus {
   padding: 4rem 1rem;
   color: var(--text-muted);
   font-size: 1.1rem;
+}
+
+/* ================= Dark Mode Component Overrides ================= */
+[data-theme="dark"] ::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+[data-theme="dark"] ::-webkit-scrollbar-track {
+  background: #0b0f19;
+}
+
+[data-theme="dark"] ::-webkit-scrollbar-thumb {
+  background: #263346;
+  border-radius: 4px;
+}
+
+[data-theme="dark"] ::-webkit-scrollbar-thumb:hover {
+  background: #3a4b63;
+}
+
+[data-theme="dark"] .card-metrics {
+  background: #0e1624;
+  border-color: #1c2637;
+}
+
+[data-theme="dark"] .card-past-year {
+  background: #0e1624;
+  border-top-color: #263346;
+}
+
+[data-theme="dark"] .badge-su {
+  background-color: rgba(139, 92, 246, 0.2);
+  color: #c4b5fd;
+  border-color: rgba(139, 92, 246, 0.4);
+}
+
+[data-theme="dark"] .badge-cscu {
+  background-color: rgba(14, 165, 233, 0.2);
+  color: #7dd3fc;
+  border-color: rgba(14, 165, 233, 0.4);
+}
+
+[data-theme="dark"] .badge-sem1 {
+  background-color: rgba(245, 158, 11, 0.2);
+  color: #fde68a;
+  border-color: rgba(245, 158, 11, 0.4);
+}
+
+[data-theme="dark"] .badge-sem2 {
+  background-color: rgba(168, 85, 247, 0.2);
+  color: #e9d5ff;
+  border-color: rgba(168, 85, 247, 0.4);
+}
+
+[data-theme="dark"] .badge-both {
+  background-color: rgba(148, 163, 184, 0.2);
+  color: #cbd5e1;
+  border-color: rgba(148, 163, 184, 0.35);
+}
+
+/* Round Banners Dark Mode */
+[data-theme="dark"] .round-context-banner {
+  background: #111927;
+}
+
+[data-theme="dark"] .round-context-banner.banner-r1 {
+  background: linear-gradient(135deg, rgba(30, 58, 138, 0.3) 0%, #111927 100%);
+  border-color: #1e40af;
+  border-left-color: #3b82f6;
+}
+
+[data-theme="dark"] .round-context-banner.banner-r2 {
+  background: linear-gradient(135deg, rgba(180, 83, 9, 0.3) 0%, #111927 100%);
+  border-color: #92400e;
+  border-left-color: #f59e0b;
+}
+
+[data-theme="dark"] .round-context-banner.banner-r3 {
+  background: linear-gradient(135deg, rgba(107, 33, 168, 0.3) 0%, #111927 100%);
+  border-color: #6b21a8;
+  border-left-color: #a855f7;
+}
+
+[data-theme="dark"] .banner-r1 .round-banner-badge {
+  background: rgba(30, 58, 138, 0.5);
+  color: #93c5fd;
+  border-color: #2563eb;
+}
+
+[data-theme="dark"] .banner-r2 .round-banner-badge {
+  background: rgba(180, 83, 9, 0.5);
+  color: #fde68a;
+  border-color: #d97706;
+}
+
+[data-theme="dark"] .banner-r3 .round-banner-badge {
+  background: rgba(107, 33, 168, 0.5);
+  color: #e9d5ff;
+  border-color: #7c3aed;
+}
+
+/* Modal Dark Mode */
+[data-theme="dark"] .modal-backdrop {
+  background: rgba(3, 7, 18, 0.82);
+}
+
+[data-theme="dark"] .modal-dialog {
+  background: #151d2c;
+  border: 1px solid var(--border);
+}
+
+[data-theme="dark"] .modal-header {
+  background: #151d2c;
+  border-bottom-color: var(--border);
+}
+
+[data-theme="dark"] .modal-stat-box {
+  background: #0e1624;
+  border-color: var(--border);
+}
+
+[data-theme="dark"] .stat-box-clickable:hover {
+  background-color: #192334;
+  border-color: #3b82f6;
+}
+
+[data-theme="dark"] .info-pill-btn {
+  background: rgba(239, 68, 68, 0.2);
+  color: #fca5a5;
+  border-color: rgba(239, 68, 68, 0.4);
+}
+
+[data-theme="dark"] .info-pill-btn:hover {
+  background: rgba(239, 68, 68, 0.35);
+  color: #ffffff;
+}
+
+[data-theme="dark"] .modal-round-alert.alert-r1 {
+  background-color: rgba(30, 58, 138, 0.25);
+  border-color: #1e40af;
+  border-left-color: #3b82f6;
+  color: #bfdbfe;
+}
+
+[data-theme="dark"] .modal-round-alert.alert-r2 {
+  background-color: rgba(180, 83, 9, 0.25);
+  border-color: #92400e;
+  border-left-color: #f59e0b;
+  color: #fde68a;
+}
+
+[data-theme="dark"] .modal-round-alert.alert-r3 {
+  background-color: rgba(107, 33, 168, 0.25);
+  border-color: #6b21a8;
+  border-left-color: #a855f7;
+  color: #e9d5ff;
+}
+
+/* Tie Breaker Panel Dark Mode */
+[data-theme="dark"] .tie-breaker-panel {
+  background: #111927;
+  border-color: var(--border);
+}
+
+[data-theme="dark"] .tbp-formula-bar {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.12) 0%, rgba(59, 130, 246, 0.12) 100%);
+  border-color: #1e3a8a;
+  border-left-color: var(--primary);
+}
+
+[data-theme="dark"] .formula-code {
+  color: #f8fafc;
+}
+
+[data-theme="dark"] .tbp-tier-card {
+  background: #0e1624;
+  border-color: var(--border);
+}
+
+[data-theme="dark"] .tbp-tiebreakers-section {
+  background: #0e1624;
+  border-color: var(--border);
+}
+
+[data-theme="dark"] .tb-step-item {
+  background: #151d2c;
+  border-color: var(--border);
+}
+
+[data-theme="dark"] .tb-step-ballot {
+  background: rgba(180, 83, 9, 0.18);
+  border-color: rgba(245, 158, 11, 0.35);
+}
+
+[data-theme="dark"] .tb-step-ballot .tb-step-num {
+  background: rgba(245, 158, 11, 0.3);
+  color: #fde68a;
+}
+
+[data-theme="dark"] .takeaway-card {
+  background: rgba(180, 83, 9, 0.18);
+  border-color: rgba(245, 158, 11, 0.35);
+  color: #fde68a;
+}
+
+/* Comparison Section Dark Mode */
+[data-theme="dark"] .comparison-section {
+  background: var(--bg-card);
+  border-color: var(--border);
+}
+
+[data-theme="dark"] .chart-view-toggle {
+  background: #0e1624;
+  border-color: var(--border);
+}
+
+[data-theme="dark"] .view-toggle-btn.active {
+  background: #1c2638;
+  color: var(--primary);
+}
+
+[data-theme="dark"] .yoy-insight-box {
+  background: #0e1624;
+  border-color: var(--border);
+  border-left-color: var(--primary);
+}
+
+[data-theme="dark"] .yoy-round-pills {
+  background: #151d2c;
+}
+
+[data-theme="dark"] .round-pill-btn.active {
+  background: #1c2638;
+  color: var(--primary);
+}
+
+[data-theme="dark"] .yoy-verdict {
+  color: #cbd5e1;
+}
+
+/* Tables Dark Mode */
+[data-theme="dark"] .table-responsive {
+  border-color: var(--border);
+}
+
+[data-theme="dark"] .data-table th {
+  background: #0e1624;
+  color: var(--text-muted);
+  border-bottom-color: var(--border);
+}
+
+[data-theme="dark"] .data-table td {
+  border-bottom-color: #1c2637;
+  color: var(--text-main);
+}
+
+[data-theme="dark"] .data-table tr:hover {
+  background-color: #192334;
+}
+
+[data-theme="dark"] .th-info-badge {
+  background: rgba(59, 130, 246, 0.2);
+  color: #60a5fa;
+}
+
+/* Buttons & Pagination Dark Mode */
+[data-theme="dark"] .btn-secondary {
+  background: #1c2638;
+  border-color: var(--border);
+  color: var(--text-main);
+}
+
+[data-theme="dark"] .btn-secondary:hover {
+  background: #263346;
+}
+
+[data-theme="dark"] .page-btn {
+  background: var(--bg-card);
+  border-color: var(--border);
+  color: var(--text-main);
+}
+
+[data-theme="dark"] .page-btn:hover:not(:disabled) {
+  background: #1c2638;
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+[data-theme="dark"] .page-btn:disabled {
+  background: #0e1624;
+  border-color: var(--border);
+  color: var(--text-subtle);
 }
 
 /* Responsive */
@@ -1454,6 +1838,18 @@ select:focus {
   .modal-round-alert {
     flex-direction: column;
     gap: 0.4rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .theme-btn-text {
+    display: none;
+  }
+  .theme-seg-btn {
+    padding: 0.35rem 0.45rem;
+  }
+  .header-meta {
+    gap: 0.5rem;
   }
 }
 
